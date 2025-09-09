@@ -84,7 +84,7 @@ fun LoginScreen() {
                 Image(
                     painter = painterResource(id = R.drawable.logo), // ¡CAMBIA ESTO POR TU LOGO!
                     contentDescription = "Logo de la empresa",
-                    modifier = Modifier.height(120.dp).size(100.dp)
+                    modifier = Modifier.height(80.dp).width(240.dp)
                 )
 
                 // ANDROID/COMPOSE: 'Spacer' simplemente crea un espacio vacío entre elementos.
