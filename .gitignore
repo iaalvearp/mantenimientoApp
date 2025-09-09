@@ -1,0 +1,31 @@
+# Archivos de configuración del IDE (Android Studio)
+# Contienen configuraciones locales de tu máquina.
+.idea/
+.DS_Store
+
+# Archivo de propiedades locales
+# A menudo contiene rutas del SDK o claves de API que no deben compartirse.
+local.properties
+
+# Archivos de Gradle
+# Caché y archivos de configuración de Gradle específicos de la sesión.
+.gradle/
+build/
+
+# Archivos generados por el build
+# APKs, AABs, y otros archivos de salida.
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Archivos de Keystore
+# ¡MUY IMPORTANTE! Contienen las claves para firmar tu aplicación.
+# Nunca deben ser públicos.
+*.jks
+*.keystore
+
+# Registros de errores y volcados de memoria
+captures/
+*.hprof
