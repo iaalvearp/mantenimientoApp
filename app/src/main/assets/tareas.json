@@ -1,0 +1,97 @@
+[
+  {
+    "id": 1,
+    "clienteId": 1,
+    "provinciaId": 13,
+    "unidadNegocioId": 1,
+    "usuarioId": 101,
+    "equipos": [
+      {
+        "id": "21980107133GJ7000257",
+        "nombre": "SWITCH CAPA 3",
+        "modelo": "S5730-68C-SI-AC",
+        "caracteristicas": "(48 Ethernet 10/100/1000 ports,4 10 Gig SFP+, AC 110/220V)",
+        "estadoId": 2
+      },
+      {
+        "id": "21980105812SJ4600371",
+        "nombre": "SWITCH CAPA 2",
+        "modelo": "S5720-28X-LI-AC",
+        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+        "estadoId": 1
+      },
+      {
+        "id": "21980105812SJ4600293",
+        "nombre": "SWITCH CAPA 2",
+        "modelo": "S5720-28X-LI-AC",
+        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+        "estadoId": 3
+      },
+      {
+        "id": "21980105812SJ4600373",
+        "nombre": "SWITCH CAPA 2",
+        "modelo": "S5720-28X-LI-AC",
+        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+        "estadoId": 1
+      },
+      {
+        "id": "21980105812SJ4600325",
+        "nombre": "SWITCH CAPA 2",
+        "modelo": "S5720-28X-LI-AC",
+        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+        "estadoId": 3
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "clienteId": 1,
+    "provinciaId": 13,
+    "unidadNegocioId": 4,
+    "usuarioId": 102,
+    "equipos": [
+      {
+        "id": "21980107133GJ7000255",
+        "nombre": "SWITCH CAPA 3",
+        "modelo": "S5730-68C-SI-AC",
+        "caracteristicas": "(48 Ethernet 10/100/1000 ports,4 10 Gig SFP+, AC 110/220V)",
+        "estadoId": 3
+      },
+      {
+        "id": "21980105812SJ4600336",
+        "nombre": "SWITCH CAPA 2",
+        "modelo": "S5720-28X-LI-AC",
+        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+        "estadoId": 1
+      },
+      {
+        "id": "21980105812SJ4600332",
+        "nombre": "SWITCH CAPA 2",
+        "modelo": "S5720-28X-LI-AC",
+        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+        "estadoId": 2
+      },
+      {
+        "id": "21980105812SJ4600322",
+        "nombre": "SWITCH CAPA 2",
+        "modelo": "S5720-28X-LI-AC",
+        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+        "estadoId": 2
+      },
+      {
+        "id": "21980105812SJ4600338",
+        "nombre": "SWITCH CAPA 2",
+        "modelo": "S5720-28X-LI-AC",
+        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+        "estadoId": 3
+      },
+      {
+        "id": "21980105812SJ4600317",
+        "nombre": "SWITCH CAPA 2",
+        "modelo": "S5720-28X-LI-AC",
+        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+        "estadoId": 1
+      }
+    ]
+  }
+]

@@ -1,0 +1,31 @@
+{
+  "posiblesRespuestas": [
+    { "id": 1, "label": "Muy Bien", "value": "muy_bien" },
+    { "id": 2, "label": "Bien", "value": "bien" },
+    { "id": 3, "label": "Regular", "value": "regular" },
+    { "id": 4, "label": "Mal", "value": "mal" },
+    { "id": 5, "label": "Muy Mal", "value": "muy_mal" }
+  ],
+  "actividades": [
+    {
+      "id": 1,
+      "nombre": "Limpieza y organización de racks, equipos y ventiladores."
+    },
+    {
+      "id": 2,
+      "nombre": "Verificación de las conexiones de energía eléctrica."
+    },
+    {
+      "id": 3,
+      "nombre": "Revisión de la configuración de red y conectividad."
+    },
+    {
+      "id": 4,
+      "nombre": "Actualización de firmware y software de los equipos."
+    },
+    {
+      "id": 5,
+      "nombre": "Pruebas de funcionamiento y rendimiento del sistema."
+    }
+  ]
+}
