@@ -38,4 +38,7 @@ interface AppDao {
 
     @Query("SELECT * FROM usuarios WHERE id = :userId LIMIT 1")
     suspend fun obtenerUsuarioPorId(userId: Int): Usuario?
+
+    @Query("SELECT * FROM usuarios WHERE nombre = :nombre AND password = :password LIMIT 1")
+    suspend fun obtenerUsuarioPorCredenciales(nombre: String, password: String): Usuario?
 }

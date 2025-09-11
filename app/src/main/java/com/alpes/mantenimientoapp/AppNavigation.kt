@@ -2,6 +2,9 @@
 package com.alpes.mantenimientoapp
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -12,29 +15,38 @@ import androidx.navigation.navArgument
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    // KOTLIN: 'startDestination' sigue siendo "login".
+    // --- CORRECCIÓN ---
+    // 1. Obtenemos el contexto actual para poder acceder a la base de datos.
+    val context = LocalContext.current
+    // 2. Creamos la "fábrica" que sabe cómo construir nuestro LoginViewModel.
+    val dao = AppDatabase.getDatabase(context).appDao()
+    val viewModelFactory = ViewModelFactory(dao)
+    // --- FIN DE LA CORRECCIÓN ---
+
+
     NavHost(navController = navController, startDestination = "login") {
 
         composable("login") {
+            // 3. Creamos el ViewModel usando la fábrica y se lo pasamos a la pantalla.
+            val loginViewModel: LoginViewModel = viewModel(factory = viewModelFactory)
+
             LoginScreen(
-                onLoginSuccess = {
-                    // TODO: Aquí iría la lógica real de login.
-                    // Por ahora, asumimos que el usuario con ID 101 se logueó exitosamente.
-                    navController.navigate("home/101") { // Pasamos el ID del usuario en la ruta.
+                loginViewModel = loginViewModel, // <-- PARÁMETRO AÑADIDO
+                onLoginSuccess = { userId ->
+                    // Cuando el login es exitoso (notificado por el ViewModel), navegamos.
+                    navController.navigate("home/$userId") {
                         popUpTo("login") { inclusive = true }
                     }
                 }
             )
         }
 
-        // KOTLIN: La ruta ahora espera un argumento, que llamamos "userId".
         composable(
             route = "home/{userId}",
             arguments = listOf(navArgument("userId") { type = NavType.IntType })
         ) { backStackEntry ->
-            // Extraemos el userId de los argumentos de la ruta.
             val userId = backStackEntry.arguments?.getInt("userId") ?: 0
-            HomeScreen(userId = userId) // Le pasamos el ID a la HomeScreen.
+            HomeScreen(userId = userId)
         }
     }
 }

@@ -35,15 +35,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.LaunchedEffect
 
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: (Int) -> Unit, // CAMBIO 1: Le decimos que ahora espera recibir un Int
-    loginViewModel: LoginViewModel = viewModel() // CAMBIO 2: Conectamos el ViewModel
+    onLoginSuccess: (Int) -> Unit,
+    loginViewModel: LoginViewModel // <-- Quitamos el "= viewModel()"
 ) {
-    var usuario by remember { mutableStateOf("") }
-    var contrasena by remember { mutableStateOf("") }
+    val uiState by loginViewModel.uiState.collectAsStateWithLifecycle()
+
+    // Este bloque se ejecutará cada vez que uiState.loginExitoso cambie a true
+    LaunchedEffect(uiState.loginExitoso) {
+        if (uiState.loginExitoso && uiState.userId != null) {
+            onLoginSuccess(uiState.userId!!)
+        }
+    }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -72,8 +80,8 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 OutlinedTextField(
-                    value = usuario,
-                    onValueChange = { usuario = it },
+                    value = uiState.usuario, // Leemos el valor del ViewModel
+                    onValueChange = { loginViewModel.onUsuarioChange(it) }, // Notificamos al ViewModel
                     label = { Text("Usuario") },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -81,16 +89,29 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
-                    value = contrasena,
-                    onValueChange = { contrasena = it },
+                    value = uiState.contrasena, // Leemos el valor del ViewModel
+                    onValueChange = { loginViewModel.onContrasenaChange(it) }, // Notificamos al ViewModel
                     label = { Text("Contraseña") },
                     modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = PasswordVisualTransformation()
+                    visualTransformation = PasswordVisualTransformation(),
+                    isError = uiState.error != null
                 )
+
+                // 1. "Tomamos la foto" del estado del error.
+                val errorActual = uiState.error
+
+                // 2. Comprobamos la foto.
+                if (errorActual != null) {
+                    Text(
+                        text = errorActual, // 3. Usamos la foto, que es 100% segura.
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                TextButton(onClick = { /* TODO: Lógica para recuperar contraseña */ }) {
+                TextButton(onClick = { loginViewModel.onLoginClicked() },) {
                     Text(
                         text = "Recuperar contraseña",
                         modifier = Modifier.fillMaxWidth(),
@@ -102,7 +123,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
-                    onClick = { /* TODO: Lógica para validar el login */ },
+                    onClick = { loginViewModel.onLoginClicked() },
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))
