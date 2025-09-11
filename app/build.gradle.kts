@@ -75,5 +75,5 @@ dependencies {
     implementation(libs.gson)
 
     // Librería para tener acceso a todos los iconos de Material Design
-    implementation("androidx.compose.material:material-icons-extended-android:1.6.8")
+    implementation(libs.androidx.material.icons.extended)
 }

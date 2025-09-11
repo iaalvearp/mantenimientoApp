@@ -33,27 +33,30 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alpes.mantenimientoapp.ui.theme.MantenimientoAppTheme
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    userId: Int, // Recibimos el ID del usuario desde el navegador.
     homeViewModel: HomeViewModel = viewModel()
 ) {
-    // KOTLIN/COMPOSE: Estos dos son los "controles remotos" para nuestro menú.
-    // 'drawerState': Recuerda si el menú está abierto o cerrado.
+    // KOTLIN/COMPOSE: 'LaunchedEffect' ejecuta un bloque de código una sola vez
+    // cuando el composable aparece en pantalla. Es perfecto para llamar a nuestro ViewModel
+    // y decirle que cargue los datos para el usuario actual.
+    LaunchedEffect(key1 = userId) {
+        homeViewModel.loadDataForUser(userId)
+    }
+
+    val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    // 'scope': Nos permite abrir o cerrar el menú con una animación suave.
     val scope = rememberCoroutineScope()
 
-    val equipos by homeViewModel.uiState.collectAsStateWithLifecycle()
-
-    // ANDROID/COMPOSE: Este es el contenedor principal que permite un menú deslizable.
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            // Aquí le decimos qué contenido debe mostrar el menú.
-            // Llamamos a la nueva función que crearemos más abajo.
-            AppDrawerContent()
+            // Le pasamos el objeto de usuario al contenido del menú.
+            AppDrawerContent(usuario = uiState.usuario)
         }
     ) {
         // El contenido principal de la pantalla va aquí.
@@ -78,10 +81,8 @@ fun HomeScreen(
                 )
             }
         ) { innerPadding ->
-            LazyColumn(
-                modifier = Modifier.padding(innerPadding)
-            ) {
-                items(equipos) { equipo ->
+            LazyColumn(modifier = Modifier.padding(innerPadding)) {
+                items(uiState.equipos) { equipo ->
                     EquipmentListItem(equipo = equipo)
                 }
             }
@@ -92,7 +93,7 @@ fun HomeScreen(
 // ANDROID/COMPOSE: Hemos creado una nueva función solo para el contenido del menú.
 // Esto mantiene nuestro código limpio y ordenado.
 @Composable
-fun AppDrawerContent() {
+fun AppDrawerContent(usuario: Usuario?) {
     // ANDROID/COMPOSE: 'ModalDrawerSheet' es la hoja de papel sobre la que dibujamos el menú.
     ModalDrawerSheet {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -108,9 +109,18 @@ fun AppDrawerContent() {
                     painter = painterResource(id = R.drawable.ic_launcher_foreground), // TODO: Cambia por tu logo blanco
                     contentDescription = "Logo"
                 )
-                // TODO: Más adelante, estos datos vendrán del usuario que hizo login.
-                Text("Juan Perez", color = Color.White, style = MaterialTheme.typography.headlineSmall)
-                Text("Técnico de Campo", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                // Mostramos el nombre del usuario. Si es nulo, mostramos "Cargando..."
+                Text(
+                    usuario?.nombre ?: "Cargando...", // KOTLIN: El operador elvis (?:)
+                    color = Color.White,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                // TODO: Necesitamos añadir una tabla de Roles para mostrar "Técnico de Campo"
+                Text(
+                    "Técnico de Campo", // Por ahora lo dejamos fijo.
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
 
             // 2. Opciones del Menú
@@ -147,6 +157,6 @@ fun HomeScreenPreview() {
     MantenimientoAppTheme {
         // En la vista previa, como no podemos interactuar, no veremos el menú deslizable.
         // Pero podemos previsualizar su contenido por separado.
-        AppDrawerContent()
+        AppDrawerContent(Usuario(1, "Juan Perez", "juan.perez@example.com", "123", 1))
     }
 }

@@ -35,4 +35,7 @@ interface AppDao {
     // Esta consulta nos traerá todas las tareas asignadas a un usuario específico.
     @Query("SELECT * FROM tareas WHERE usuarioId = :idDelUsuario")
     suspend fun obtenerTareasPorUsuario(idDelUsuario: Int): List<Tarea>
+
+    @Query("SELECT * FROM usuarios WHERE id = :userId LIMIT 1")
+    suspend fun obtenerUsuarioPorId(userId: Int): Usuario?
 }
