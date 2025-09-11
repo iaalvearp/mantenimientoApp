@@ -27,14 +27,15 @@ fun AppNavigation() {
     NavHost(navController = navController, startDestination = "login") {
 
         composable("login") {
-            // 3. Creamos el ViewModel usando la fábrica y se lo pasamos a la pantalla.
             val loginViewModel: LoginViewModel = viewModel(factory = viewModelFactory)
 
             LoginScreen(
-                loginViewModel = loginViewModel, // <-- PARÁMETRO AÑADIDO
+                loginViewModel = loginViewModel,
                 onLoginSuccess = { userId ->
-                    // Cuando el login es exitoso (notificado por el ViewModel), navegamos.
+                    // ✅ CORRECCIÓN FINAL: Reemplazamos el println con la navegación real.
                     navController.navigate("home/$userId") {
+                        // Esto previene que el usuario pueda volver a la pantalla de login
+                        // presionando el botón de "atrás".
                         popUpTo("login") { inclusive = true }
                     }
                 }

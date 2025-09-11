@@ -3,11 +3,18 @@ package com.alpes.mantenimientoapp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.ViewModelProvider
+import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import com.alpes.mantenimientoapp.ui.theme.MantenimientoAppTheme
 import com.google.gson.Gson
@@ -15,58 +22,49 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.InputStreamReader
-import androidx.core.content.edit
 
 class MainActivity : ComponentActivity() {
-    private lateinit var viewModelFactory: ViewModelFactory
+
+    // 1. Creamos un estado para controlar si la app está cargando los datos iniciales.
+    private var isLoading by mutableStateOf(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val dao = AppDatabase.getDatabase(applicationContext).appDao()
-        viewModelFactory = ViewModelFactory(dao)
-
+        // Lanzamos la corrutina para preparar la base de datos.
         lifecycleScope.launch(Dispatchers.IO) {
             prepopulateDatabaseIfNeeded()
+            // Cuando termina, actualizamos el estado en el hilo principal.
+            runOnUiThread {
+                isLoading = false
+            }
         }
 
-        // CORRECCIÓN 1: Se eliminó el setContent duplicado
         setContent {
             MantenimientoAppTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = Color(0xFF33A8FF) // Un color de fondo para distinguirlo
-                ) {
-                    // Obtenemos una instancia del ViewModel usando nuestra Factory
-                    val loginViewModel: LoginViewModel = ViewModelProvider(this, viewModelFactory)[LoginViewModel::class.java]
-
-                    LoginScreen(
-                        loginViewModel = loginViewModel,
-                        onLoginSuccess = { userId ->
-                            // Por ahora, solo imprimimos en consola, pero ya está listo para navegar.
-                            println("LOGIN EXITOSO para el usuario ID: $userId")
-                        }
-                    )
+                // 2. Decidimos qué mostrar basado en el estado de carga.
+                if (isLoading) {
+                    LoadingScreen()
+                } else {
+                    // Una vez que la carga termina, mostramos la navegación normal.
+                    AppNavigation()
                 }
             }
         }
     }
 
-    // CORRECCIÓN 2: La función y las data class ahora están DENTRO de MainActivity
     private suspend fun prepopulateDatabaseIfNeeded() {
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
         val isFirstRun = prefs.getBoolean("is_first_run", true)
-
         if (isFirstRun) {
             val database = AppDatabase.getDatabase(applicationContext)
             val dao = database.appDao()
             val gson = Gson()
 
-            // --- Cargar Tareas y Equipos ---
+            // Cargar Tareas y Equipos
             val tareasStream = assets.open("tareas.json")
             val tareaListType = object : TypeToken<List<TareaConEquipos>>() {}.type
             val tareasConEquipos: List<TareaConEquipos> = gson.fromJson(InputStreamReader(tareasStream), tareaListType)
-
             tareasConEquipos.forEach { tareaConEquipos ->
                 dao.insertarTarea(tareaConEquipos.toTarea())
                 tareaConEquipos.equipos.forEach { equipoJson ->
@@ -74,14 +72,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // --- Cargar Usuarios y Estados desde database.json ---
+            // Cargar Usuarios y Estados
             val databaseStream = assets.open("database.json")
             val databaseJsonData: DatabaseJsonData = gson.fromJson(InputStreamReader(databaseStream), DatabaseJsonData::class.java)
-
             databaseJsonData.usuarios.forEach { dao.insertarUsuario(it) }
             databaseJsonData.estados.forEach { dao.insertarEstado(it) }
 
-            prefs.edit { putBoolean("is_first_run", false) }
+            // Usamos la extensión KTX que es más limpia
+            prefs.edit {
+                putBoolean("is_first_run", false)
+            }
         }
     }
 
@@ -110,4 +110,17 @@ class MainActivity : ComponentActivity() {
         val usuarios: List<Usuario>,
         val estados: List<Estado>
     )
-} // <-- FIN DE LA CLASE MainActivity
+}
+
+// 3. Creamos un Composable simple para la pantalla de carga.
+@Composable
+fun LoadingScreen() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF33A8FF)), // Puedes usar el color de fondo que prefieras
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(color = Color.White)
+    }
+}

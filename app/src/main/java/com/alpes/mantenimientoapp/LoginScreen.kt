@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.size
 
 
 @Composable
@@ -80,8 +82,8 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 OutlinedTextField(
-                    value = uiState.usuario, // Leemos el valor del ViewModel
-                    onValueChange = { loginViewModel.onUsuarioChange(it) }, // Notificamos al ViewModel
+                    value = uiState.email, // Leemos el valor del ViewModel
+                    onValueChange = { loginViewModel.onEmailChange(it) }, // Notificamos al ViewModel
                     label = { Text("Usuario") },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -124,11 +126,22 @@ fun LoginScreen(
 
                 Button(
                     onClick = { loginViewModel.onLoginClicked() },
+                    // El botón solo se habilita si el token está listo Y no estamos cargando.
+                    enabled = uiState.isTokenReady && !uiState.isLoading,
                     modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))
                 ) {
-                    Text(text = "Ingresar", fontSize = 18.sp, color = Color.White)
+                    if (uiState.isLoading) {
+                        // Muestra una rueda de carga si estamos validando
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        // Muestra el texto normal si no estamos cargando
+                        Text(text = "Ingresar", fontSize = 18.sp, color = Color.White)
+                    }
                 }
             }
         }
