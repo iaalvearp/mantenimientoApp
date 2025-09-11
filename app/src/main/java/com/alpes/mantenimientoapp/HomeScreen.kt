@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Menu
@@ -106,7 +107,7 @@ fun AppDrawerContent(usuario: Usuario?) {
                 verticalArrangement = Arrangement.spacedBy(8.dp) // Espacio entre elementos
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground), // TODO: Cambia por tu logo blanco
+                    painter = painterResource(id = R.drawable.logo), // TODO: Cambia por tu logo blanco
                     contentDescription = "Logo"
                 )
                 // Mostramos el nombre del usuario. Si es nulo, mostramos "Cargando..."
@@ -141,7 +142,7 @@ fun AppDrawerContent(usuario: Usuario?) {
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
             NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Logout, contentDescription = "Cerrar Sesión") },
+                icon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Cerrar Sesión") },
                 label = { Text("Cerrar Sesión") },
                 selected = false,
                 onClick = { /* TODO: Lógica para cerrar sesión */ }

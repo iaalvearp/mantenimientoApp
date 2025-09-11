@@ -34,10 +34,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 @Composable
-fun LoginScreen(onLoginSuccess: () -> Unit) {
+fun LoginScreen(
+    onLoginSuccess: (Int) -> Unit, // CAMBIO 1: Le decimos que ahora espera recibir un Int
+    loginViewModel: LoginViewModel = viewModel() // CAMBIO 2: Conectamos el ViewModel
+) {
     var usuario by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
 

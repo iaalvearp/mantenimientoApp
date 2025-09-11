@@ -34,7 +34,13 @@ class MainActivity : ComponentActivity() {
                 ) {
                     // Por ahora, seguimos mostrando el LoginScreen.
                     // Más adelante lo cambiaremos por un sistema de navegación.
-                    LoginScreen()
+                    LoginScreen(
+                        onLoginSuccess = { userId ->
+                            // Cuando implementemos la navegación, usaremos este userId
+                            // para ir a la pantalla de inicio correcta. Ejemplo:
+                            // navController.navigate("home/${userId}")
+                        }
+                    )
                 }
             }
         }

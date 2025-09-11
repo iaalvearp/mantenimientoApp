@@ -76,4 +76,7 @@ dependencies {
 
     // Librería para tener acceso a todos los iconos de Material Design
     implementation(libs.androidx.material.icons.extended)
+
+    // Conexion con el ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
 }
