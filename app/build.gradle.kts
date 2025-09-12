@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.alpes.mantenimientoapp" // Revisa que tu namespace sea este
+    namespace = "com.alpes.mantenimientoapp"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.alpes.mantenimientoapp" // Revisa que tu applicationId sea este
+        applicationId = "com.alpes.mantenimientoapp"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
@@ -38,7 +38,6 @@ android {
         compose = true
     }
     composeOptions {
-        // ESTA ES LA LÍNEA CLAVE QUE SOLUCIONA EL PROBLEMA
         kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
     }
     packaging {
@@ -49,15 +48,16 @@ android {
 }
 
 dependencies {
-    // Usamos los alias definidos en el archivo .toml
+    // Core y UI - Usando el catálogo
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
 
     // Navegación
     implementation(libs.androidx.navigation.compose)
@@ -74,9 +74,12 @@ dependencies {
     // Gson
     implementation(libs.gson)
 
-    // Librería para tener acceso a todos los iconos de Material Design
-    implementation(libs.androidx.material.icons.extended)
-
-    // Conexion con el ViewModel
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+    // Dependencias para Pruebas - Ahora también usan el catálogo
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }
