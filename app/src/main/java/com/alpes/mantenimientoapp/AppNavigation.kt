@@ -47,7 +47,19 @@ fun AppNavigation() {
             arguments = listOf(navArgument("userId") { type = NavType.IntType })
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getInt("userId") ?: 0
-            HomeScreen(userId = userId)
+
+            // Pasamos la lógica de navegación a la HomeScreen
+            HomeScreen(
+                userId = userId,
+                onLogout = {
+                    // Esta es la orden que se ejecutará al hacer clic en "Cerrar Sesión"
+                    navController.navigate("login") {
+                        // Limpia todo el historial de navegación para que el usuario
+                        // no pueda volver a la pantalla de inicio con el botón "atrás".
+                        popUpTo(0)
+                    }
+                }
+            )
         }
     }
 }
