@@ -1,15 +1,18 @@
 // Archivo: TaskDetailScreen.kt
 package com.alpes.mantenimientoapp
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
@@ -23,68 +26,78 @@ import java.util.*
 fun TaskDetailScreen(
     // Más adelante recibiremos el ViewModel y el NavController
 ) {
-    // Estado para la fecha, inicializado con el timestamp actual
-    var selectedDateMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    var selectedDateMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Ficha de Mantenimiento") },
-                navigationIcon = {
-                    IconButton(onClick = { /* TODO: Lógica para volver atrás */ }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        Column(
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF33A8FF)),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(12.dp),
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            Text("INFORMACIÓN GENERAL", style = MaterialTheme.typography.titleMedium)
-
-            // --- Campos de Información General ---
-            DropdownField(label = "Cliente", options = listOf("CORPORACIÓN NACIONAL DE ELECTRICIDAD CNEL EP"))
-            DropdownField(label = "Nombre del proyecto", options = listOf("CORP SERVICIO DE SOPORTE MANTENIMIENTO Y GARANTÍA..."))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(modifier = Modifier.weight(1f)) {
-                    DropdownField(label = "Provincia", options = listOf("ESMERALDAS", "GUAYAS", "PICHINCHA"))
-                }
-                Box(modifier = Modifier.weight(1f)) {
-                    DropdownField(label = "Ciudad", options = listOf("ESMERALDAS", "GUAYAQUIL", "QUITO"))
-                }
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(modifier = Modifier.weight(1f)) {
-                    DropdownField(label = "Nombre de unidad de negocio", options = listOf("ESMERALDAS"))
-                }
-                Box(modifier = Modifier.weight(1f)) {
-                    DateField(
-                        label = "Fecha",
-                        selectedDateMillis = selectedDateMillis,
-                        onClick = { showDatePicker = true }
+            Scaffold(
+                containerColor = Color.White,
+                topBar = {
+                    TopAppBar(
+                        title = { Text("Ficha de Mantenimiento") },
+                        navigationIcon = {
+                            IconButton(onClick = { /* TODO: Lógica para volver atrás */ }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                     )
                 }
-            }
+            ) { paddingValues ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(horizontal = 8.dp, vertical = 16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text("INFORMACIÓN GENERAL", style = MaterialTheme.typography.titleMedium)
+                        DropdownField(label = "Cliente", options = listOf("CORPORACIÓN NACIONAL DE ELECTRICIDAD CNEL EP"), isTall = true)
+                        DropdownField(label = "Nombre del proyecto", options = listOf("CORP SERVICIO DE SOPORTE MANTENIMIENTO Y GARANTÍA..."), isTall = true)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Provincia", options = listOf("ESMERALDAS", "GUAYAS")) }
+                            Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Ciudad", options = listOf("ESMERALDAS", "GUAYAQUIL")) }
+                        }
+                        DropdownField(label = "Unidad de negocio", options = listOf("ESMERALDAS"))
+                        DateField(selectedDateMillis = selectedDateMillis, onClick = { showDatePicker = true })
+                        DropdownField(label = "Agencia, oficina, subestación", options = listOf("UBICACIÓN ACTUAL SUBESTACIÓN MANTA 1..."), isTall = true)
 
-            DropdownField(label = "Agencia, oficina, subestación", options = listOf("UBICACIÓN ACTUAL SUBESTACIÓN MANTA 1 - BODEGA DE TRANSFORMADORES"))
+                        Text("INFORMACIÓN DE EQUIPO", style = MaterialTheme.typography.titleMedium)
+                        DropdownField(label = "Tipo de equipo", options = listOf("ROUTER", "SWITCH", "SERVIDOR"))
+                        DropdownField(label = "Número de serie", options = listOf("S/N", "ABC-123"))
+                        DropdownField(label = "Modelo del equipo", options = listOf("CISCO-2901", "HUAWEI-NE40"))
+                    }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { /*TODO*/ }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))) {
-                Text("SIGUIENTE")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { /*TODO*/ },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))
+                    ) {
+                        Text("SIGUIENTE")
+                    }
+                }
             }
         }
     }
 
-    // --- Diálogo del Selector de Fecha ---
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDateMillis)
         DatePickerDialog(
@@ -93,14 +106,10 @@ fun TaskDetailScreen(
                 TextButton(onClick = {
                     selectedDateMillis = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
                     showDatePicker = false
-                }) {
-                    Text("Aceptar")
-                }
+                }) { Text("Aceptar") }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancelar")
-                }
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
             }
         ) {
             DatePicker(state = datePickerState)
@@ -108,44 +117,42 @@ fun TaskDetailScreen(
     }
 }
 
+// --- FUNCIONES AUXILIARES ---
+// Aquí estaban las definiciones que se borraron.
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DropdownField(
     label: String,
     options: List<String>,
-    initialValue: String = options.firstOrNull() ?: ""
+    initialValue: String = options.firstOrNull() ?: "",
+    isTall: Boolean = false
 ) {
     var expanded by remember { mutableStateOf(false) }
     var selectedOptionText by remember { mutableStateOf(initialValue) }
+    val heightModifier = if (isTall) Modifier.heightIn(min = 80.dp) else Modifier
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-    ) {
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
         OutlinedTextField(
             modifier = Modifier
                 .menuAnchor()
                 .fillMaxWidth()
-                .heightIn(max = 150.dp), // Máximo 3 líneas aprox.
+                .then(heightModifier),
             readOnly = true,
             value = selectedOptionText,
             onValueChange = {},
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(),
+            colors = ExposedDropdownMenuDefaults.textFieldColors(unfocusedContainerColor = Color(0xFFFFFFFF)),
         )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { selectionOption ->
                 DropdownMenuItem(
                     text = { Text(selectionOption) },
                     onClick = {
                         selectedOptionText = selectionOption
                         expanded = false
-                    },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                    }
                 )
             }
         }
@@ -153,18 +160,14 @@ private fun DropdownField(
 }
 
 @Composable
-private fun DateField(
-    label: String,
-    selectedDateMillis: Long,
-    onClick: () -> Unit
-) {
+private fun DateField(selectedDateMillis: Long, onClick: () -> Unit) {
     val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     val dateString = formatter.format(Date(selectedDateMillis))
 
     OutlinedTextField(
         value = dateString,
         onValueChange = {},
-        label = { Text(label) },
+        label = { Text("Fecha") },
         readOnly = true,
         modifier = Modifier
             .fillMaxWidth()
