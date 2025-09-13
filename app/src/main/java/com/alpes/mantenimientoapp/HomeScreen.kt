@@ -4,24 +4,23 @@ package com.alpes.mantenimientoapp
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.alpes.mantenimientoapp.ui.theme.MantenimientoAppTheme
 import kotlinx.coroutines.launch
 
@@ -29,8 +28,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     userId: Int,
-    homeViewModel: HomeViewModel = viewModel(),
-    onLogout: () -> Unit // <-- CAMBIO 1: HomeScreen ahora espera recibir la función de logout.
+    homeViewModel: HomeViewModel,
+    onLogout: () -> Unit,
+    onEquipoClicked: (equipoId: String) -> Unit // Para navegar al detalle
 ) {
     LaunchedEffect(key1 = userId) {
         homeViewModel.loadDataForUser(userId)
@@ -70,7 +70,11 @@ fun HomeScreen(
         ) { innerPadding ->
             LazyColumn(modifier = Modifier.padding(innerPadding)) {
                 items(uiState.equipos) { equipo ->
-                    EquipmentListItem(equipo = equipo)
+                    // CORRECCIÓN: Pasamos la función onClick al item
+                    EquipmentListItem(
+                        equipo = equipo,
+                        onClick = { onEquipoClicked(equipo.id) }
+                    )
                 }
             }
         }
@@ -134,6 +138,32 @@ fun AppDrawerContent(
         }
     }
 }
+
+// CORRECCIÓN: Este Composable necesita el parámetro onClick
+@Composable
+fun EquipmentListItem(equipo: Equipo, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clickable(onClick = onClick), // Hacemos toda la tarjeta clicleable
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Router, contentDescription = "Equipo", modifier = Modifier.size(40.dp))
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(equipo.nombre, fontWeight = FontWeight.Bold)
+                Text("S/N: ${equipo.id}", style = MaterialTheme.typography.bodySmall)
+            }
+            // Aquí podrías añadir el estado del equipo si lo tienes
+        }
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable

@@ -20,12 +20,24 @@ import androidx.compose.ui.unit.dp
 import com.alpes.mantenimientoapp.ui.theme.MantenimientoAppTheme
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskDetailScreen(
-    // Más adelante recibiremos el ViewModel y el NavController
+    equipoId: String,
+    viewModel: TaskDetailViewModel,
+    onNavigateBack: () -> Unit
 ) {
+    LaunchedEffect(key1 = equipoId) {
+        viewModel.loadDataForEquipo(equipoId)
+    }
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val equipo = uiState.equipo
+    val tarea = uiState.tarea
+
     var selectedDateMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -80,9 +92,18 @@ fun TaskDetailScreen(
                         DropdownField(label = "Agencia, oficina, subestación", options = listOf("UBICACIÓN ACTUAL SUBESTACIÓN MANTA 1..."), isTall = true)
 
                         Text("INFORMACIÓN DE EQUIPO", style = MaterialTheme.typography.titleMedium)
-                        DropdownField(label = "Tipo de equipo", options = listOf("ROUTER", "SWITCH", "SERVIDOR"))
-                        DropdownField(label = "Número de serie", options = listOf("S/N", "ABC-123"))
-                        DropdownField(label = "Modelo del equipo", options = listOf("CISCO-2901", "HUAWEI-NE40"))
+                        DropdownField(
+                            label = "Tipo de equipo",
+                            options = listOf(equipo?.nombre ?: "Cargando..."),
+                        )
+                        DropdownField(
+                            label = "Número de serie",
+                            options = listOf(equipo?.id ?: "Cargando..."),
+                        )
+                        DropdownField(
+                            label = "Modelo del equipo",
+                            options = listOf(equipo?.modelo ?: "Cargando..."),
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -181,7 +202,18 @@ private fun DateField(selectedDateMillis: Long, onClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun TaskDetailScreenPreview() {
+    // 1. Creamos un contexto falso para el ViewModel.
+    val context = LocalContext.current
+    // 2. Creamos un DAO falso (no lo usaremos, pero el ViewModel lo necesita).
+    val fakeDao = AppDatabase.getDatabase(context).appDao()
+    // 3. Creamos una instancia del ViewModel real, pero solo para el preview.
+    val previewViewModel = TaskDetailViewModel(fakeDao)
+
     MantenimientoAppTheme {
-        TaskDetailScreen()
+        TaskDetailScreen(
+            equipoId = "PREVIEW-ID-123", // Un ID de ejemplo
+            viewModel = previewViewModel,   // El ViewModel que acabamos de crear
+            onNavigateBack = {}             // Una función vacía, ya que no hay a dónde navegar
+        )
     }
 }

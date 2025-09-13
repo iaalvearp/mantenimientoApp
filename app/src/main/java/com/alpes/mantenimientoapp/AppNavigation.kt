@@ -1,9 +1,9 @@
 // Archivo: AppNavigation.kt
 package com.alpes.mantenimientoapp
 
+import androidx.lifecycle.ViewModelProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -34,8 +34,6 @@ fun AppNavigation() {
                 onLoginSuccess = { userId ->
                     // ✅ CORRECCIÓN FINAL: Reemplazamos el println con la navegación real.
                     navController.navigate("home/$userId") {
-                        // Esto previene que el usuario pueda volver a la pantalla de login
-                        // presionando el botón de "atrás".
                         popUpTo("login") { inclusive = true }
                     }
                 }
@@ -47,18 +45,33 @@ fun AppNavigation() {
             arguments = listOf(navArgument("userId") { type = NavType.IntType })
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getInt("userId") ?: 0
+            val homeViewModel: HomeViewModel = viewModel(factory = viewModelFactory)
 
             // Pasamos la lógica de navegación a la HomeScreen
             HomeScreen(
                 userId = userId,
+                homeViewModel = homeViewModel,
                 onLogout = {
-                    // Esta es la orden que se ejecutará al hacer clic en "Cerrar Sesión"
-                    navController.navigate("login") {
-                        // Limpia todo el historial de navegación para que el usuario
-                        // no pueda volver a la pantalla de inicio con el botón "atrás".
-                        popUpTo(0)
-                    }
+                    navController.navigate("login") { popUpTo(0) }
+                },
+                onEquipoClicked = { equipoId ->
+                    // Cuando se hace clic en un equipo, navegamos a la pantalla de detalle
+                    navController.navigate("taskDetail/$equipoId")
                 }
+            )
+        }
+
+        composable(
+            route = "taskDetail/{equipoId}",
+            arguments = listOf(navArgument("equipoId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
+            val taskDetailViewModel: TaskDetailViewModel = viewModel(factory = viewModelFactory)
+
+            TaskDetailScreen(
+                equipoId = equipoId,
+                viewModel = taskDetailViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

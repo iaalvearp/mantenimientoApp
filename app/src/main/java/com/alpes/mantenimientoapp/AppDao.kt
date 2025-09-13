@@ -41,4 +41,10 @@ interface AppDao {
 
     @Query("SELECT * FROM usuarios WHERE nombre = :nombre AND password = :password LIMIT 1")
     suspend fun obtenerUsuarioPorCredenciales(nombre: String, password: String): Usuario?
+
+    @Query("SELECT * FROM equipos WHERE id = :equipoId LIMIT 1")
+    suspend fun obtenerEquipoPorId(equipoId: String): Equipo?
+
+    @Query("SELECT * FROM tareas WHERE id = :tareaId LIMIT 1")
+    suspend fun obtenerTareaPorId(tareaId: Int): Tarea?
 }

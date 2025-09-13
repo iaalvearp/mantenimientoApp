@@ -5,10 +5,17 @@ import androidx.lifecycle.ViewModelProvider
 
 class ViewModelFactory(private val dao: AppDao) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(LoginViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return LoginViewModel(dao) as T
+        return when {
+            modelClass.isAssignableFrom(LoginViewModel::class.java) -> {
+                LoginViewModel(dao) as T
+            }
+            modelClass.isAssignableFrom(HomeViewModel::class.java) -> {
+                HomeViewModel(dao) as T // Añadido para HomeViewModel
+            }
+            modelClass.isAssignableFrom(TaskDetailViewModel::class.java) -> {
+                TaskDetailViewModel(dao) as T
+            }
+            else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
