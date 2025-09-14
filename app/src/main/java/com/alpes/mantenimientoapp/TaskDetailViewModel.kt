@@ -10,21 +10,39 @@ import kotlinx.coroutines.launch
 // Estado que representa la información de la pantalla de detalle
 data class TaskDetailUiState(
     val equipo: Equipo? = null,
-    val tarea: Tarea? = null
-    // Aquí podríamos añadir más datos, como el nombre del cliente, etc.
+    val tarea: Tarea? = null,
+    val cliente: Cliente? = null,
+    val proyecto: Proyecto? = null,
+    val provincia: Provincia? = null
+    // Añade aquí los demás objetos que necesites
 )
 
-class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
+open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TaskDetailUiState())
-    val uiState = _uiState.asStateFlow()
+    open val uiState = _uiState.asStateFlow()
 
-    fun loadDataForEquipo(equipoId: String) {
+    open fun loadDataForEquipo(equipoId: String) {
         viewModelScope.launch {
             val equipo = dao.obtenerEquipoPorId(equipoId)
             if (equipo != null) {
                 val tarea = dao.obtenerTareaPorId(equipo.tareaId)
-                _uiState.update { it.copy(equipo = equipo, tarea = tarea) }
+
+                // Obtenemos los datos relacionados usando los IDs de la tarea
+                // Necesitarás añadir 'proyectoId' y 'provinciaId' a tu data class Tarea.kt para que esto funcione
+                val cliente = tarea?.clienteId?.let { dao.obtenerClientePorId(it) }
+                // val proyecto = tarea?.proyectoId?.let { dao.obtenerProyectoPorId(it) }
+                // val provincia = tarea?.provinciaId?.let { dao.obtenerProvinciaPorId(it) }
+
+                _uiState.update {
+                    it.copy(
+                        equipo = equipo,
+                        tarea = tarea,
+                        cliente = cliente
+                        // proyecto = proyecto,
+                        // provincia = provincia
+                    )
+                }
             }
         }
     }

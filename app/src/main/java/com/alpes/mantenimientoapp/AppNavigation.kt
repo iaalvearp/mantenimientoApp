@@ -1,7 +1,6 @@
 // Archivo: AppNavigation.kt
 package com.alpes.mantenimientoapp
 
-import androidx.lifecycle.ViewModelProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -71,7 +70,21 @@ fun AppNavigation() {
             TaskDetailScreen(
                 equipoId = equipoId,
                 viewModel = taskDetailViewModel,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                // Le decimos qué hacer cuando se presione "SIGUIENTE"
+                onNextClicked = {
+                    navController.navigate("maintenanceActivities")
+                }
+            )
+        }
+
+        composable("maintenanceActivities") {
+            MaintenanceActivitiesScreen(
+                onNavigateBack = { navController.popBackStack() },
+                // Por ahora, los clics no hacen nada, lo conectaremos después
+                onPreventiveClicked = { /* TODO: Navigate to Preventive Checklist */ },
+                onCorrectiveClicked = { /* TODO: Navigate to Corrective Checklist */ },
+                onNextClicked = { /* TODO: Navigate to the next screen */ }
             )
         }
     }

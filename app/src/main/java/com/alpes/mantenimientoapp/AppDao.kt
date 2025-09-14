@@ -25,6 +25,15 @@ interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarEstado(estado: Estado)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarCliente(cliente: Cliente)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarProyecto(proyecto: Proyecto)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarProvincia(provincia: Provincia)
+
 
     // ANDROID/ROOM: @Query nos permite hacer consultas personalizadas a la base de datos.
     // Escribimos la consulta en lenguaje SQL. Esta, por ejemplo, selecciona todos
@@ -47,4 +56,13 @@ interface AppDao {
 
     @Query("SELECT * FROM tareas WHERE id = :tareaId LIMIT 1")
     suspend fun obtenerTareaPorId(tareaId: Int): Tarea?
+
+    @Query("SELECT * FROM clientes WHERE id = :clienteId LIMIT 1")
+    suspend fun obtenerClientePorId(clienteId: Int): Cliente?
+
+    @Query("SELECT * FROM proyectos WHERE id = :proyectoId LIMIT 1")
+    suspend fun obtenerProyectoPorId(proyectoId: Int): Proyecto?
+
+    @Query("SELECT * FROM provincias WHERE id = :provinciaId LIMIT 1")
+    suspend fun obtenerProvinciaPorId(provinciaId: Int): Provincia?
 }

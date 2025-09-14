@@ -15,20 +15,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alpes.mantenimientoapp.ui.theme.MantenimientoAppTheme
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.text.SimpleDateFormat
 import java.util.*
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskDetailScreen(
     equipoId: String,
     viewModel: TaskDetailViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNextClicked: () -> Unit
 ) {
     LaunchedEffect(key1 = equipoId) {
         viewModel.loadDataForEquipo(equipoId)
@@ -36,7 +40,9 @@ fun TaskDetailScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val equipo = uiState.equipo
-    val tarea = uiState.tarea
+    val cliente = uiState.cliente
+    val proyecto = uiState.proyecto
+    val provincia = uiState.provincia
 
     var selectedDateMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -60,7 +66,7 @@ fun TaskDetailScreen(
                     TopAppBar(
                         title = { Text("Ficha de Mantenimiento") },
                         navigationIcon = {
-                            IconButton(onClick = { /* TODO: Lógica para volver atrás */ }) {
+                            IconButton(onClick = onNavigateBack) {
                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                             }
                         },
@@ -81,34 +87,25 @@ fun TaskDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text("INFORMACIÓN GENERAL", style = MaterialTheme.typography.titleMedium)
-                        DropdownField(label = "Cliente", options = listOf("CORPORACIÓN NACIONAL DE ELECTRICIDAD CNEL EP"), isTall = true)
-                        DropdownField(label = "Nombre del proyecto", options = listOf("CORP SERVICIO DE SOPORTE MANTENIMIENTO Y GARANTÍA..."), isTall = true)
+                        DropdownField(label = "Cliente", options = listOf(cliente?.nombreCompleto ?: "Cargando..."), isTall = true)
+                        DropdownField(label = "Nombre del proyecto", options = listOf(proyecto?.nombre ?: "Cargando..."), isTall = true)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Provincia", options = listOf("ESMERALDAS", "GUAYAS")) }
-                            Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Ciudad", options = listOf("ESMERALDAS", "GUAYAQUIL")) }
+                            Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Provincia", options = listOf(provincia?.nombre ?: "Cargando...")) }
+                            Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Ciudad", options = listOf("GUAYAQUIL")) }
                         }
-                        DropdownField(label = "Unidad de negocio", options = listOf("ESMERALDAS"))
+                        DropdownField(label = "Unidad de negocio", options = listOf("UNIDAD XYZ"))
                         DateField(selectedDateMillis = selectedDateMillis, onClick = { showDatePicker = true })
-                        DropdownField(label = "Agencia, oficina, subestación", options = listOf("UBICACIÓN ACTUAL SUBESTACIÓN MANTA 1..."), isTall = true)
+                        DropdownField(label = "Agencia, oficina, subestación", options = listOf("SUBESTACIÓN MANTA 1..."), isTall = true)
 
                         Text("INFORMACIÓN DE EQUIPO", style = MaterialTheme.typography.titleMedium)
-                        DropdownField(
-                            label = "Tipo de equipo",
-                            options = listOf(equipo?.nombre ?: "Cargando..."),
-                        )
-                        DropdownField(
-                            label = "Número de serie",
-                            options = listOf(equipo?.id ?: "Cargando..."),
-                        )
-                        DropdownField(
-                            label = "Modelo del equipo",
-                            options = listOf(equipo?.modelo ?: "Cargando..."),
-                        )
+                        DropdownField(label = "Tipo de equipo", options = listOf(equipo?.nombre ?: "Cargando..."))
+                        DropdownField(label = "Número de serie", options = listOf(equipo?.id ?: "Cargando..."))
+                        DropdownField(label = "Modelo del equipo", options = listOf(equipo?.modelo ?: "Cargando..."))
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
-                        onClick = { /*TODO*/ },
+                        onClick = onNextClicked,
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))
                     ) {
@@ -121,8 +118,7 @@ fun TaskDetailScreen(
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDateMillis)
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
+        DatePickerDialog(onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     selectedDateMillis = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
@@ -138,8 +134,8 @@ fun TaskDetailScreen(
     }
 }
 
+
 // --- FUNCIONES AUXILIARES ---
-// Aquí estaban las definiciones que se borraron.
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -164,7 +160,7 @@ private fun DropdownField(
             onValueChange = {},
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(unfocusedContainerColor = Color(0xFFFFFFFF)),
+            colors = ExposedDropdownMenuDefaults.textFieldColors(unfocusedContainerColor = Color(0xFFF0F0F0)),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { selectionOption ->
@@ -199,21 +195,51 @@ private fun DateField(selectedDateMillis: Long, onClick: () -> Unit) {
     )
 }
 
+// --- VISTA PREVIA Y CLASES FALSAS (MOCKS) ---
+
+private class FakeAppDao : AppDao {
+    override suspend fun insertarUsuario(usuario: Usuario) {}
+    override suspend fun insertarTarea(tarea: Tarea) {}
+    override suspend fun insertarEquipo(equipo: Equipo) {}
+    override suspend fun insertarEstado(estado: Estado) {}
+    override suspend fun insertarCliente(cliente: Cliente) {}
+    override suspend fun insertarProyecto(proyecto: Proyecto) {}
+    override suspend fun insertarProvincia(provincia: Provincia) {}
+    override suspend fun obtenerEquiposPorTarea(idDeLaTarea: Int): List<Equipo> = emptyList()
+    override suspend fun obtenerTareasPorUsuario(idDelUsuario: Int): List<Tarea> = emptyList()
+    override suspend fun obtenerUsuarioPorId(userId: Int): Usuario? = null
+    override suspend fun obtenerUsuarioPorCredenciales(email: String, password: String): Usuario? = null
+    override suspend fun obtenerEquipoPorId(equipoId: String): Equipo? = null
+    override suspend fun obtenerTareaPorId(tareaId: Int): Tarea? = null
+    override suspend fun obtenerClientePorId(clienteId: Int): Cliente? = null
+    override suspend fun obtenerProyectoPorId(proyectoId: Int): Proyecto? = null
+    override suspend fun obtenerProvinciaPorId(provinciaId: Int): Provincia? = null
+}
+
+private class PreviewTaskDetailViewModel(initialState: TaskDetailUiState) : TaskDetailViewModel(dao = FakeAppDao()) {
+    private val _uiState = MutableStateFlow(initialState)
+    override val uiState = _uiState.asStateFlow()
+    override fun loadDataForEquipo(equipoId: String) {}
+}
+
 @Preview(showBackground = true)
 @Composable
 fun TaskDetailScreenPreview() {
-    // 1. Creamos un contexto falso para el ViewModel.
-    val context = LocalContext.current
-    // 2. Creamos un DAO falso (no lo usaremos, pero el ViewModel lo necesita).
-    val fakeDao = AppDatabase.getDatabase(context).appDao()
-    // 3. Creamos una instancia del ViewModel real, pero solo para el preview.
-    val previewViewModel = TaskDetailViewModel(fakeDao)
+    val previewState = TaskDetailUiState(
+        equipo = Equipo("PREVIEW-ID-123", "ROUTER DE PRUEBA", "MODELO-XYZ", "", 1, 1),
+        cliente = Cliente(1, "CNEL", "CORPORACIÓN NACIONAL DE ELECTRICIDAD"),
+        proyecto = Proyecto(1, "SOPORTE Y MANTENIMIENTO"),
+        provincia = Provincia(1, "GUAYAS")
+    )
+
+    val previewViewModel = remember { PreviewTaskDetailViewModel(previewState) }
 
     MantenimientoAppTheme {
         TaskDetailScreen(
-            equipoId = "PREVIEW-ID-123", // Un ID de ejemplo
-            viewModel = previewViewModel,   // El ViewModel que acabamos de crear
-            onNavigateBack = {}             // Una función vacía, ya que no hay a dónde navegar
+            equipoId = "PREVIEW-ID-123",
+            viewModel = previewViewModel,
+            onNavigateBack = {},
+            onNextClicked = {}
         )
     }
 }

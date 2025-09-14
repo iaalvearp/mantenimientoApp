@@ -10,7 +10,20 @@ import androidx.room.RoomDatabase
 // 'version': Es un número de versión. Si en el futuro cambiamos la estructura de las tablas,
 //            tendremos que aumentar este número. Por ahora, es 1.
 // 'exportSchema': Es una opción avanzada, la dejamos en 'false' por ahora.
-@Database(entities = [Usuario::class, Tarea::class, Equipo::class, Estado::class], version = 1, exportSchema = false)
+@Database(
+    entities = [
+        Usuario::class,
+        Tarea::class,
+        Equipo::class,
+        Estado::class,
+        // --- AÑADE ESTAS LÍNEAS ---
+        Cliente::class,
+        Proyecto::class,
+        Provincia::class
+    ],
+    version = 2, // <-- IMPORTANTE: Aumenta la versión a 2
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
 
     // KOTLIN: Esta función abstracta conecta la base de datos con nuestro "intérprete" (el DAO).
