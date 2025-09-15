@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -165,7 +166,7 @@ fun EquipmentListItem(equipo: Equipo, onClick: () -> Unit) {
             }
             // --- CORRECCIÓN AQUÍ ---
             Icon(
-                imageVector = Icons.Filled.KeyboardArrowRight, // Se cambia de AutoMirrored.Filled a solo Filled
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, // Se cambia de AutoMirrored.Filled a solo Filled
                 contentDescription = "Ver detalle"
             )
         }

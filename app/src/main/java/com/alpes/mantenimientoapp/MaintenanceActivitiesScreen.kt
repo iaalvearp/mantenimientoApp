@@ -41,30 +41,44 @@ fun MaintenanceActivitiesScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Button(onClick = onPreventiveClicked, modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = onPreventiveClicked,
+                modifier = Modifier.fillMaxWidth(),
+                // CORRECCIÓN: Nuevo color para el botón PREVENTIVO
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF049AF8))
+            ) {
                 Text("PREVENTIVO")
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onCorrectiveClicked, modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = onCorrectiveClicked,
+                modifier = Modifier.fillMaxWidth(),
+                // CORRECCIÓN: Nuevo color para el botón CORRECTIVO
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF049AF8))
+            ) {
                 Text("CORRECTIVO")
             }
 
-            // Botones de navegación fijos en la parte inferior
+            // Fila para los botones de navegación inferiores
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 32.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(16.dp) // Añade espacio entre los botones
             ) {
                 Button(
                     onClick = onNavigateBack,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                    // CORRECCIÓN: Usamos weight para que ocupe la mitad del espacio
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text("ATRÁS")
                 }
                 Button(
                     onClick = onNextClicked,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00)),
+                    // CORRECCIÓN: Usamos weight para que ocupe la otra mitad
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text("SIGUIENTE")
                 }

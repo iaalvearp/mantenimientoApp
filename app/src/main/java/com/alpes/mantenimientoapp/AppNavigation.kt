@@ -81,10 +81,21 @@ fun AppNavigation() {
         composable("maintenanceActivities") {
             MaintenanceActivitiesScreen(
                 onNavigateBack = { navController.popBackStack() },
-                // Por ahora, los clics no hacen nada, lo conectaremos después
-                onPreventiveClicked = { /* TODO: Navigate to Preventive Checklist */ },
-                onCorrectiveClicked = { /* TODO: Navigate to Corrective Checklist */ },
-                onNextClicked = { /* TODO: Navigate to the next screen */ }
+                onPreventiveClicked = {
+                    // Navegamos a la nueva pantalla de checklist
+                    navController.navigate("preventiveChecklist")
+                },
+                onCorrectiveClicked = { /* TODO */ },
+                onNextClicked = { /* TODO */ }
+            )
+        }
+
+// --- NUEVA RUTA PARA LA CHECKLIST ---
+        composable("preventiveChecklist") {
+            val checklistViewModel: ChecklistViewModel = viewModel(factory = viewModelFactory)
+            PreventiveChecklistScreen(
+                viewModel = checklistViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
