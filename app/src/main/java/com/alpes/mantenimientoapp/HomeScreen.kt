@@ -45,7 +45,8 @@ fun HomeScreen(
         drawerContent = {
             AppDrawerContent(
                 usuario = uiState.usuario,
-                onLogoutClicked = onLogout // <-- CAMBIO 2: Pasamos la función de logout al menú.
+                rol = uiState.rol, // <-- AÑADE ESTO
+                onLogoutClicked = onLogout
             )
         }
     ) {
@@ -84,7 +85,8 @@ fun HomeScreen(
 @Composable
 fun AppDrawerContent(
     usuario: Usuario?,
-    onLogoutClicked: () -> Unit // <-- CAMBIO 3: El menú ahora espera recibir una función.
+    rol: Rol?, // <-- AÑADE ESTO
+    onLogoutClicked: () -> Unit
 ) {
     ModalDrawerSheet {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -94,11 +96,13 @@ fun AppDrawerContent(
                     .fillMaxWidth()
                     .background(Color(0xFFF57C00))
                     .padding(vertical = 24.dp, horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "Logo"
+                    painter = painterResource(id = R.drawable.logowhite),
+                    contentDescription = "Logo",
+                    modifier = Modifier.width(240.dp)
                 )
                 Text(
                     usuario?.nombre ?: "Cargando...",
@@ -106,7 +110,7 @@ fun AppDrawerContent(
                     style = MaterialTheme.typography.headlineSmall
                 )
                 Text(
-                    "Técnico de Campo",
+                    rol?.nombre ?: "Sin rol asignado", // <-- CAMBIA ESTA LÍNEA
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -146,7 +150,7 @@ fun EquipmentListItem(equipo: Equipo, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clickable(onClick = onClick), // Hacemos toda la tarjeta clicleable
+            .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -159,7 +163,11 @@ fun EquipmentListItem(equipo: Equipo, onClick: () -> Unit) {
                 Text(equipo.nombre, fontWeight = FontWeight.Bold)
                 Text("S/N: ${equipo.id}", style = MaterialTheme.typography.bodySmall)
             }
-            // Aquí podrías añadir el estado del equipo si lo tienes
+            // --- CORRECCIÓN AQUÍ ---
+            Icon(
+                imageVector = Icons.Filled.KeyboardArrowRight, // Se cambia de AutoMirrored.Filled a solo Filled
+                contentDescription = "Ver detalle"
+            )
         }
     }
 }
@@ -171,6 +179,7 @@ fun HomeScreenPreview() {
     MantenimientoAppTheme {
         AppDrawerContent(
             usuario = Usuario(1, "Juan Perez", "juan.perez@example.com", "123", 1),
+            rol = Rol(1, "Técnico de Campo"), // <-- CAMBIO 3: Pasamos el rol
             onLogoutClicked = {} // <-- CAMBIO 5: En la vista previa, la función no hace nada.
         )
     }

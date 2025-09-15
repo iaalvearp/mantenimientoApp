@@ -3,6 +3,7 @@ package com.alpes.mantenimientoapp
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -91,11 +92,11 @@ fun TaskDetailScreen(
                         DropdownField(label = "Nombre del proyecto", options = listOf(proyecto?.nombre ?: "Cargando..."), isTall = true)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Provincia", options = listOf(provincia?.nombre ?: "Cargando...")) }
-                            Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Ciudad", options = listOf("GUAYAQUIL")) }
+                            Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Ciudad", options = listOf("GUAYAQUIL")) } // Dato fijo por ahora
                         }
-                        DropdownField(label = "Unidad de negocio", options = listOf("UNIDAD XYZ"))
+                        DropdownField(label = "Unidad de negocio", options = listOf("UNIDAD XYZ")) // Dato fijo
                         DateField(selectedDateMillis = selectedDateMillis, onClick = { showDatePicker = true })
-                        DropdownField(label = "Agencia, oficina, subestación", options = listOf("SUBESTACIÓN MANTA 1..."), isTall = true)
+                        DropdownField(label = "Agencia, oficina, subestación", options = listOf("SUBESTACIÓN MANTA 1..."), isTall = true) // Dato fijo
 
                         Text("INFORMACIÓN DE EQUIPO", style = MaterialTheme.typography.titleMedium)
                         DropdownField(label = "Tipo de equipo", options = listOf(equipo?.nombre ?: "Cargando..."))
@@ -160,7 +161,7 @@ private fun DropdownField(
             onValueChange = {},
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(unfocusedContainerColor = Color(0xFFF0F0F0)),
+            colors = ExposedDropdownMenuDefaults.textFieldColors(unfocusedContainerColor = Color(0xFFFFFFFF)),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { selectionOption ->
@@ -180,17 +181,35 @@ private fun DropdownField(
 private fun DateField(selectedDateMillis: Long, onClick: () -> Unit) {
     val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     val dateString = formatter.format(Date(selectedDateMillis))
+    // Creamos una fuente de interacción para compartirla
+    val interactionSource = remember { MutableInteractionSource() }
 
     OutlinedTextField(
         value = dateString,
         onValueChange = {},
         label = { Text("Fecha") },
         readOnly = true,
+        // Esta es la nueva forma de hacer un campo clicleable sin el efecto de onda,
+        // lo que soluciona el error de "Indication".
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null, // <- Sin efecto visual de onda al hacer clic
+                onClick = onClick
+            ),
         trailingIcon = {
-            Icon(Icons.Default.DateRange, contentDescription = "Seleccionar fecha", Modifier.clickable(onClick = onClick))
+            Icon(
+                Icons.Default.DateRange,
+                contentDescription = "Seleccionar fecha",
+                // --- CORRECCIÓN AQUÍ ---
+                // Aplicamos el mismo modificador clicleable al icono
+                modifier = Modifier.clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick
+                )
+            )
         }
     )
 }
@@ -205,6 +224,14 @@ private class FakeAppDao : AppDao {
     override suspend fun insertarCliente(cliente: Cliente) {}
     override suspend fun insertarProyecto(proyecto: Proyecto) {}
     override suspend fun insertarProvincia(provincia: Provincia) {}
+    override suspend fun insertarActividadMantenimiento(actividad: ActividadMantenimiento) {}
+    override suspend fun insertarPosibleRespuesta(respuesta: PosibleRespuesta) {}
+
+    // --- LÍNEAS AÑADIDAS ---
+    override suspend fun insertarRol(rol: Rol) {}
+    override suspend fun obtenerRolPorId(rolId: Int): Rol? = null
+    // --- FIN ---
+
     override suspend fun obtenerEquiposPorTarea(idDeLaTarea: Int): List<Equipo> = emptyList()
     override suspend fun obtenerTareasPorUsuario(idDelUsuario: Int): List<Tarea> = emptyList()
     override suspend fun obtenerUsuarioPorId(userId: Int): Usuario? = null
@@ -214,6 +241,8 @@ private class FakeAppDao : AppDao {
     override suspend fun obtenerClientePorId(clienteId: Int): Cliente? = null
     override suspend fun obtenerProyectoPorId(proyectoId: Int): Proyecto? = null
     override suspend fun obtenerProvinciaPorId(provinciaId: Int): Provincia? = null
+    override suspend fun obtenerActividadesMantenimiento(): List<ActividadMantenimiento> = emptyList()
+    override suspend fun obtenerPosiblesRespuestas(): List<PosibleRespuesta> = emptyList()
 }
 
 private class PreviewTaskDetailViewModel(initialState: TaskDetailUiState) : TaskDetailViewModel(dao = FakeAppDao()) {

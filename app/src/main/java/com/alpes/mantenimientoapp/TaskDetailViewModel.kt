@@ -1,3 +1,4 @@
+// Archivo: TaskDetailViewModel.kt
 package com.alpes.mantenimientoapp
 
 import androidx.lifecycle.ViewModel
@@ -7,14 +8,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// Estado que representa la información de la pantalla de detalle
 data class TaskDetailUiState(
     val equipo: Equipo? = null,
     val tarea: Tarea? = null,
     val cliente: Cliente? = null,
     val proyecto: Proyecto? = null,
     val provincia: Provincia? = null
-    // Añade aquí los demás objetos que necesites
 )
 
 open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
@@ -28,19 +27,17 @@ open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
             if (equipo != null) {
                 val tarea = dao.obtenerTareaPorId(equipo.tareaId)
 
-                // Obtenemos los datos relacionados usando los IDs de la tarea
-                // Necesitarás añadir 'proyectoId' y 'provinciaId' a tu data class Tarea.kt para que esto funcione
                 val cliente = tarea?.clienteId?.let { dao.obtenerClientePorId(it) }
-                // val proyecto = tarea?.proyectoId?.let { dao.obtenerProyectoPorId(it) }
-                // val provincia = tarea?.provinciaId?.let { dao.obtenerProvinciaPorId(it) }
+                val proyecto = tarea?.proyectoId?.let { dao.obtenerProyectoPorId(it) }
+                val provincia = tarea?.provinciaId?.let { dao.obtenerProvinciaPorId(it) }
 
                 _uiState.update {
                     it.copy(
                         equipo = equipo,
                         tarea = tarea,
-                        cliente = cliente
-                        // proyecto = proyecto,
-                        // provincia = provincia
+                        cliente = cliente,
+                        proyecto = proyecto,
+                        provincia = provincia
                     )
                 }
             }

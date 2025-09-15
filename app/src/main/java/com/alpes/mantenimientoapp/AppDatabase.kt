@@ -12,16 +12,14 @@ import androidx.room.RoomDatabase
 // 'exportSchema': Es una opción avanzada, la dejamos en 'false' por ahora.
 @Database(
     entities = [
-        Usuario::class,
-        Tarea::class,
-        Equipo::class,
-        Estado::class,
+        Usuario::class, Tarea::class, Equipo::class, Estado::class,
+        Cliente::class, Proyecto::class, Provincia::class,
         // --- AÑADE ESTAS LÍNEAS ---
-        Cliente::class,
-        Proyecto::class,
-        Provincia::class
+        ActividadMantenimiento::class,
+        PosibleRespuesta::class,
+        Rol::class
     ],
-    version = 2, // <-- IMPORTANTE: Aumenta la versión a 2
+    version = 4, // <-- IMPORTANTE: Aumenta la versión a 3
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,21 +32,20 @@ abstract class AppDatabase : RoomDatabase() {
     // para asegurarnos de que solo exista UNA instancia de la base de datos en toda la app.
     // Esto se conoce como "patrón Singleton" y es crucial para el rendimiento.
     companion object {
-        // KOTLIN: '@Volatile' asegura que el valor de la variable INSTANCE
-        // sea siempre el más actualizado y visible para todos los hilos de ejecución.
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
         fun getDatabase(context: Context): AppDatabase {
-            // Si la instancia ya existe, la devolvemos. Si no, la creamos.
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "mantenimiento_database" // Este será el nombre del archivo de la base de datos en el dispositivo.
-                ).build()
+                    "mantenimiento_database"
+                )
+                    // AÑADE ESTA LÍNEA AQUÍ
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
-                // devolvemos la instancia
                 instance
             }
         }

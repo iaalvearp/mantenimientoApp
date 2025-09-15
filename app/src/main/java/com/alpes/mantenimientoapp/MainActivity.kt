@@ -25,16 +25,13 @@ import java.io.InputStreamReader
 
 class MainActivity : ComponentActivity() {
 
-    // 1. Creamos un estado para controlar si la app está cargando los datos iniciales.
     private var isLoading by mutableStateOf(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Lanzamos la corrutina para preparar la base de datos.
         lifecycleScope.launch(Dispatchers.IO) {
             prepopulateDatabaseIfNeeded()
-            // Cuando termina, actualizamos el estado en el hilo principal.
             runOnUiThread {
                 isLoading = false
             }
@@ -42,11 +39,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MantenimientoAppTheme {
-                // 2. Decidimos qué mostrar basado en el estado de carga.
                 if (isLoading) {
                     LoadingScreen()
                 } else {
-                    // Una vez que la carga termina, mostramos la navegación normal.
                     AppNavigation()
                 }
             }
@@ -56,45 +51,69 @@ class MainActivity : ComponentActivity() {
     private suspend fun prepopulateDatabaseIfNeeded() {
         val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
         val isFirstRun = prefs.getBoolean("is_first_run", true)
+
         if (isFirstRun) {
             val database = AppDatabase.getDatabase(applicationContext)
             val dao = database.appDao()
             val gson = Gson()
 
-            // Cargar Tareas y Equipos
+            // Cargar database.json
+            val databaseStream = assets.open("database.json")
+            val databaseJsonData: DatabaseJsonData = gson.fromJson(InputStreamReader(databaseStream), DatabaseJsonData::class.java)
+
+            databaseJsonData.usuarios.forEach { dao.insertarUsuario(it) }
+            databaseJsonData.estados.forEach { dao.insertarEstado(it) }
+            databaseJsonData.clientes.forEach { dao.insertarCliente(it) }
+            // Asumimos que no hay una tabla de Proyectos por ahora
+            // databaseJsonData.proyectos.forEach { dao.insertarProyecto(it) }
+            databaseJsonData.ubicacion.forEach { ubi ->
+                dao.insertarProvincia(Provincia(id = ubi.id, nombre = ubi.provincia))
+            }
+
+            // Cargar tareas.json
             val tareasStream = assets.open("tareas.json")
-            val tareaListType = object : TypeToken<List<TareaConEquipos>>() {}.type
-            val tareasConEquipos: List<TareaConEquipos> = gson.fromJson(InputStreamReader(tareasStream), tareaListType)
-            tareasConEquipos.forEach { tareaConEquipos ->
-                dao.insertarTarea(tareaConEquipos.toTarea())
-                tareaConEquipos.equipos.forEach { equipoJson ->
-                    dao.insertarEquipo(equipoJson.toEquipo(tareaConEquipos.id))
+            val tareaListType = object : TypeToken<List<TareaJson>>() {}.type
+            val tareasJson: List<TareaJson> = gson.fromJson(InputStreamReader(tareasStream), tareaListType)
+
+            tareasJson.forEach { tareaJson ->
+                val tarea = Tarea(
+                    id = tareaJson.id,
+                    clienteId = tareaJson.clienteId,
+                    provinciaId = tareaJson.provinciaId,
+                    unidadNegocioId = tareaJson.unidadNegocioId,
+                    usuarioId = tareaJson.usuarioId,
+                    proyectoId = 1, // Default value
+                    ciudadId = 1,   // Default value
+                    agenciaId = 1   // Default value
+                )
+                dao.insertarTarea(tarea)
+                tareaJson.equipos.forEach { equipoJson ->
+                    dao.insertarEquipo(equipoJson.toEquipo(tarea.id))
                 }
             }
 
-            // Cargar Usuarios y Estados
-            val databaseStream = assets.open("database.json")
-            val databaseJsonData: DatabaseJsonData = gson.fromJson(InputStreamReader(databaseStream), DatabaseJsonData::class.java)
-            databaseJsonData.usuarios.forEach { dao.insertarUsuario(it) }
-            databaseJsonData.estados.forEach { dao.insertarEstado(it) }
+            // Cargar Actividades de Mantenimiento
+            val actividadesStream = assets.open("actividadesMantenimiento.json")
+            val actividadesData: ActividadesJsonData = gson.fromJson(InputStreamReader(actividadesStream), ActividadesJsonData::class.java)
+            actividadesData.actividades.forEach { dao.insertarActividadMantenimiento(it) }
+            actividadesData.posiblesRespuestas.forEach { dao.insertarPosibleRespuesta(it) }
 
-            // Usamos la extensión KTX que es más limpia
             prefs.edit {
                 putBoolean("is_first_run", false)
             }
         }
     }
 
-    private data class TareaConEquipos(
+    // --- DATA CLASSES CORREGIDAS PARA COINCIDIR CON LOS JSON ---
+
+    private data class TareaJson(
         val id: Int,
         val clienteId: Int,
         val provinciaId: Int,
         val unidadNegocioId: Int,
         val usuarioId: Int,
         val equipos: List<EquipoJson>
-    ) {
-        fun toTarea(): Tarea = Tarea(id, clienteId, provinciaId, unidadNegocioId, usuarioId)
-    }
+    )
 
     private data class EquipoJson(
         val id: String,
@@ -108,17 +127,29 @@ class MainActivity : ComponentActivity() {
 
     private data class DatabaseJsonData(
         val usuarios: List<Usuario>,
-        val estados: List<Estado>
+        val estados: List<Estado>,
+        val clientes: List<Cliente>,
+        val ubicacion: List<UbicacionJson>
+        // val proyectos: List<Proyecto> // Comentado ya que no hay tabla Proyecto en la BD
+    )
+
+    private data class UbicacionJson(
+        val id: Int,
+        val provincia: String
+    )
+
+    private data class ActividadesJsonData(
+        val posiblesRespuestas: List<PosibleRespuesta>,
+        val actividades: List<ActividadMantenimiento>
     )
 }
 
-// 3. Creamos un Composable simple para la pantalla de carga.
 @Composable
 fun LoadingScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF33A8FF)), // Puedes usar el color de fondo que prefieras
+            .background(Color(0xFF33A8FF)),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator(color = Color.White)
