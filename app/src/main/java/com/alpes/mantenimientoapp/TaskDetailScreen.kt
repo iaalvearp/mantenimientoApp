@@ -92,11 +92,11 @@ fun TaskDetailScreen(
                         DropdownField(label = "Nombre del proyecto", options = listOf(proyecto?.nombre ?: "Cargando..."), isTall = true)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Provincia", options = listOf(provincia?.nombre ?: "Cargando...")) }
-                            Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Ciudad", options = listOf("GUAYAQUIL")) } // Dato fijo por ahora
+                            Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Ciudad", options = listOf("GUAYAQUIL")) }
                         }
-                        DropdownField(label = "Unidad de negocio", options = listOf("UNIDAD XYZ")) // Dato fijo
+                        DropdownField(label = "Unidad de negocio", options = listOf("UNIDAD XYZ"))
                         DateField(selectedDateMillis = selectedDateMillis, onClick = { showDatePicker = true })
-                        DropdownField(label = "Agencia, oficina, subestación", options = listOf("SUBESTACIÓN MANTA 1..."), isTall = true) // Dato fijo
+                        DropdownField(label = "Agencia, oficina, subestación", options = listOf("SUBESTACIÓN MANTA 1..."), isTall = true)
 
                         Text("INFORMACIÓN DE EQUIPO", style = MaterialTheme.typography.titleMedium)
                         DropdownField(label = "Tipo de equipo", options = listOf(equipo?.nombre ?: "Cargando..."))
@@ -148,6 +148,11 @@ private fun DropdownField(
 ) {
     var expanded by remember { mutableStateOf(false) }
     var selectedOptionText by remember { mutableStateOf(initialValue) }
+    LaunchedEffect(options) {
+        if (options.isNotEmpty()) {
+            selectedOptionText = options.first()
+        }
+    }
     val heightModifier = if (isTall) Modifier.heightIn(min = 80.dp) else Modifier
 
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
@@ -161,7 +166,7 @@ private fun DropdownField(
             onValueChange = {},
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(unfocusedContainerColor = Color(0xFFFFFFFF)),
+            colors = ExposedDropdownMenuDefaults.textFieldColors(unfocusedContainerColor = Color(0xFFF0F0F0)),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { selectionOption ->
@@ -181,7 +186,6 @@ private fun DropdownField(
 private fun DateField(selectedDateMillis: Long, onClick: () -> Unit) {
     val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     val dateString = formatter.format(Date(selectedDateMillis))
-    // Creamos una fuente de interacción para compartirla
     val interactionSource = remember { MutableInteractionSource() }
 
     OutlinedTextField(
@@ -189,21 +193,17 @@ private fun DateField(selectedDateMillis: Long, onClick: () -> Unit) {
         onValueChange = {},
         label = { Text("Fecha") },
         readOnly = true,
-        // Esta es la nueva forma de hacer un campo clicleable sin el efecto de onda,
-        // lo que soluciona el error de "Indication".
         modifier = Modifier
             .fillMaxWidth()
             .clickable(
                 interactionSource = interactionSource,
-                indication = null, // <- Sin efecto visual de onda al hacer clic
+                indication = null,
                 onClick = onClick
             ),
         trailingIcon = {
             Icon(
                 Icons.Default.DateRange,
                 contentDescription = "Seleccionar fecha",
-                // --- CORRECCIÓN AQUÍ ---
-                // Aplicamos el mismo modificador clicleable al icono
                 modifier = Modifier.clickable(
                     interactionSource = interactionSource,
                     indication = null,
@@ -226,15 +226,11 @@ private class FakeAppDao : AppDao {
     override suspend fun insertarProvincia(provincia: Provincia) {}
     override suspend fun insertarActividadMantenimiento(actividad: ActividadMantenimiento) {}
     override suspend fun insertarPosibleRespuesta(respuesta: PosibleRespuesta) {}
-
-    // --- LÍNEAS AÑADIDAS ---
     override suspend fun insertarRol(rol: Rol) {}
-    override suspend fun obtenerRolPorId(rolId: Int): Rol? = null
-    // --- FIN ---
-
     override suspend fun obtenerEquiposPorTarea(idDeLaTarea: Int): List<Equipo> = emptyList()
     override suspend fun obtenerTareasPorUsuario(idDelUsuario: Int): List<Tarea> = emptyList()
     override suspend fun obtenerUsuarioPorId(userId: Int): Usuario? = null
+    override suspend fun obtenerRolPorId(rolId: Int): Rol? = null
     override suspend fun obtenerUsuarioPorCredenciales(email: String, password: String): Usuario? = null
     override suspend fun obtenerEquipoPorId(equipoId: String): Equipo? = null
     override suspend fun obtenerTareaPorId(tareaId: Int): Tarea? = null
@@ -243,6 +239,7 @@ private class FakeAppDao : AppDao {
     override suspend fun obtenerProvinciaPorId(provinciaId: Int): Provincia? = null
     override suspend fun obtenerActividadesMantenimiento(): List<ActividadMantenimiento> = emptyList()
     override suspend fun obtenerPosiblesRespuestas(): List<PosibleRespuesta> = emptyList()
+    override suspend fun obtenerActividadesConRespuestas(tipo: String): List<ActividadConRespuestas> = emptyList()
 }
 
 private class PreviewTaskDetailViewModel(initialState: TaskDetailUiState) : TaskDetailViewModel(dao = FakeAppDao()) {

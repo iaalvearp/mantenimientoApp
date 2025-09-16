@@ -1,17 +1,20 @@
 // Archivo: HomeScreen.kt
-
 package com.alpes.mantenimientoapp
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Router
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,7 +34,7 @@ fun HomeScreen(
     userId: Int,
     homeViewModel: HomeViewModel,
     onLogout: () -> Unit,
-    onEquipoClicked: (equipoId: String) -> Unit // Para navegar al detalle
+    onEquipoClicked: (equipoId: String) -> Unit
 ) {
     LaunchedEffect(key1 = userId) {
         homeViewModel.loadDataForUser(userId)
@@ -46,7 +49,7 @@ fun HomeScreen(
         drawerContent = {
             AppDrawerContent(
                 usuario = uiState.usuario,
-                rol = uiState.rol, // <-- AÑADE ESTO
+                rol = uiState.rol,
                 onLogoutClicked = onLogout
             )
         }
@@ -57,22 +60,19 @@ fun HomeScreen(
                     title = { Text("Inicio") },
                     navigationIcon = {
                         IconButton(onClick = {
-                            scope.launch {
-                                drawerState.open()
-                            }
+                            scope.launch { drawerState.open() }
                         }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Abrir menú"
-                            )
+                            Icon(Icons.Default.Menu, "Abrir menú")
                         }
                     }
                 )
             }
         ) { innerPadding ->
-            LazyColumn(modifier = Modifier.padding(innerPadding)) {
+            LazyColumn(
+                modifier = Modifier.padding(innerPadding),
+                contentPadding = PaddingValues(vertical = 8.dp)
+            ) {
                 items(uiState.equipos) { equipo ->
-                    // CORRECCIÓN: Pasamos la función onClick al item
                     EquipmentListItem(
                         equipo = equipo,
                         onClick = { onEquipoClicked(equipo.id) }
@@ -84,14 +84,44 @@ fun HomeScreen(
 }
 
 @Composable
+fun EquipmentListItem(equipo: Equipo, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            // --- CORRECCIÓN FINAL Y DEFINITIVA ---
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null, // <- La clave para evitar el cierre
+                onClick = onClick
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Router, contentDescription = "Equipo", modifier = Modifier.size(40.dp))
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(equipo.nombre, fontWeight = FontWeight.Bold)
+                Text("S/N: ${equipo.id}", style = MaterialTheme.typography.bodySmall)
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Ver detalle")
+        }
+    }
+}
+
+@Composable
 fun AppDrawerContent(
     usuario: Usuario?,
-    rol: Rol?, // <-- AÑADE ESTO
+    rol: Rol?,
     onLogoutClicked: () -> Unit
 ) {
     ModalDrawerSheet {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            // ... (El encabezado del menú se mantiene igual)
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -111,68 +141,35 @@ fun AppDrawerContent(
                     style = MaterialTheme.typography.headlineSmall
                 )
                 Text(
-                    rol?.nombre ?: "Sin rol asignado", // <-- CAMBIA ESTA LÍNEA
+                    rol?.nombre ?: "Sin rol asignado",
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
 
             Spacer(Modifier.height(16.dp))
-            // ... (Los otros items del menú se mantienen igual)
             NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
+                icon = { Icon(Icons.Default.Home, "Inicio") },
                 label = { Text("Inicio") },
                 selected = true,
-                onClick = { /* TODO: Cerrar menú */ }
+                onClick = { /* TODO */ }
             )
             NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Sync, contentDescription = "Sincronizar") },
+                icon = { Icon(Icons.Default.Sync, "Sincronizar") },
                 label = { Text("Sincronizar") },
                 selected = false,
-                onClick = { /* TODO: Navegar a pantalla de sincronización */ }
+                onClick = { /* TODO */ }
             )
-
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-
             NavigationDrawerItem(
-                icon = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Cerrar Sesión") },
+                icon = { Icon(Icons.AutoMirrored.Filled.Logout, "Cerrar Sesión") },
                 label = { Text("Cerrar Sesión") },
                 selected = false,
-                onClick = onLogoutClicked // <-- CAMBIO 4: Conectamos el botón a la función recibida.
+                onClick = onLogoutClicked
             )
         }
     }
 }
-
-// CORRECCIÓN: Este Composable necesita el parámetro onClick
-@Composable
-fun EquipmentListItem(equipo: Equipo, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Default.Router, contentDescription = "Equipo", modifier = Modifier.size(40.dp))
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(equipo.nombre, fontWeight = FontWeight.Bold)
-                Text("S/N: ${equipo.id}", style = MaterialTheme.typography.bodySmall)
-            }
-            // --- CORRECCIÓN AQUÍ ---
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, // Se cambia de AutoMirrored.Filled a solo Filled
-                contentDescription = "Ver detalle"
-            )
-        }
-    }
-}
-
 
 @Preview(showBackground = true)
 @Composable
@@ -180,8 +177,8 @@ fun HomeScreenPreview() {
     MantenimientoAppTheme {
         AppDrawerContent(
             usuario = Usuario(1, "Juan Perez", "juan.perez@example.com", "123", 1),
-            rol = Rol(1, "Técnico de Campo"), // <-- CAMBIO 3: Pasamos el rol
-            onLogoutClicked = {} // <-- CAMBIO 5: En la vista previa, la función no hace nada.
+            rol = Rol(1, "Técnico de Campo"),
+            onLogoutClicked = {}
         )
     }
 }

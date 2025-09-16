@@ -1,4 +1,3 @@
-// Archivo: TaskDetailViewModel.kt
 package com.alpes.mantenimientoapp
 
 import androidx.lifecycle.ViewModel

@@ -1,31 +1,199 @@
 {
-  "posiblesRespuestas": [
-    { "id": 1, "label": "Muy Bien", "value": "muy_bien" },
-    { "id": 2, "label": "Bien", "value": "bien" },
-    { "id": 3, "label": "Regular", "value": "regular" },
-    { "id": 4, "label": "Mal", "value": "mal" },
-    { "id": 5, "label": "Muy Mal", "value": "muy_mal" }
-  ],
-  "actividades": [
+  "actividadesPreventivo": [
     {
       "id": 1,
-      "nombre": "Limpieza y organización de racks, equipos y ventiladores."
+      "nombre": "Limpieza y organización de racks, equipos y ventiladores.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
     },
     {
       "id": 2,
-      "nombre": "Verificación de las conexiones de energía eléctrica."
+      "nombre": "Aplicación y ejecución del protocolo de mantenimiento.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
     },
     {
       "id": 3,
-      "nombre": "Revisión de la configuración de red y conectividad."
+      "nombre": "Solventar inconvenientes menores en caso de suscitarse o requerirlo.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
     },
     {
       "id": 4,
-      "nombre": "Actualización de firmware y software de los equipos."
+      "nombre": "Colocar etiqueta del mantenimiento correspondiente.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
     },
     {
       "id": 5,
-      "nombre": "Pruebas de funcionamiento y rendimiento del sistema."
+      "nombre": "Peinado del cableado del equipo.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
+    },
+    {
+      "id": 6,
+      "nombre": "Verificar conexiones de datos y energía.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
+    },
+    {
+      "id": 7,
+      "nombre": "Verificar alarmas visuales externas.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
+    },
+    {
+      "id": 8,
+      "nombre": "Obtencion de Backup de configuracion del equipo.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
+    }
+  ],
+
+  "actividadesCorrectivo": [
+    {
+      "id": 1,
+      "nombre": "Diagnóstico, verificación y solución problemas en forma remota.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
+    },
+    {
+      "id": 2,
+      "nombre": "Diagnóstico, verificación y solución problemas en sitio.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
+    },
+    {
+      "id": 3,
+      "nombre": "Traslado de los equipos para reparación correctiva.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
+    },
+    {
+      "id": 4,
+      "nombre": "Reemplazo de tarjetas o módulos ópticos.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
+    },
+    {
+      "id": 5,
+      "nombre": "Reemplazo de equipos.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
+    },
+    {
+      "id": 6,
+      "nombre": "En caso de ser necesario, instalar parche o upgrade del equipo.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
+    },
+    {
+      "id": 7,
+      "nombre": "Troubleshooting en el caso de configuraciones.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
+    },
+    {
+      "id": 8,
+      "nombre": "Verificar que el problema fue resuelto, agregar al informe.",
+      "posiblesRespuestas": [
+        { "id": 1, "label": "No fue necesario", "value": "no_necesario" },
+        { "id": 2, "label": "Muy Bien", "value": "muy_bien" },
+        { "id": 3, "label": "Bien", "value": "bien" },
+        { "id": 4, "label": "Regular", "value": "regular" },
+        { "id": 5, "label": "Mal", "value": "mal" },
+        { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
+      ]
     }
   ]
 }

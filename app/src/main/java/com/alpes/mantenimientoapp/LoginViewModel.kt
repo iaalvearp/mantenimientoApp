@@ -45,7 +45,7 @@ class LoginViewModel(private val dao: AppDao) : ViewModel() {
     private fun simularObtencionDeToken() {
         viewModelScope.launch {
             // Simulamos una espera de 2 segundos (como una llamada a una API)
-            delay(1500)
+            delay(5000)
             // Una vez que "obtenemos" el token, actualizamos el estado.
             _uiState.update { it.copy(isTokenReady = true) }
         }

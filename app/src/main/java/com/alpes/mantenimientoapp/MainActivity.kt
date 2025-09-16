@@ -59,22 +59,18 @@ class MainActivity : ComponentActivity() {
 
             // Cargar database.json
             val databaseStream = assets.open("database.json")
-            val databaseJsonData: DatabaseJsonData = gson.fromJson(InputStreamReader(databaseStream), DatabaseJsonData::class.java)
+            val databaseData: DatabaseJsonData = gson.fromJson(InputStreamReader(databaseStream), DatabaseJsonData::class.java)
 
-            databaseJsonData.usuarios.forEach { dao.insertarUsuario(it) }
-            databaseJsonData.estados.forEach { dao.insertarEstado(it) }
-            databaseJsonData.clientes.forEach { dao.insertarCliente(it) }
-            // Asumimos que no hay una tabla de Proyectos por ahora
-            // databaseJsonData.proyectos.forEach { dao.insertarProyecto(it) }
-            databaseJsonData.ubicacion.forEach { ubi ->
-                dao.insertarProvincia(Provincia(id = ubi.id, nombre = ubi.provincia))
-            }
+            // Insertar todos los datos de database.json
+            databaseData.roles.forEach { dao.insertarRol(it) }
+            databaseData.usuarios.forEach { dao.insertarUsuario(it) }
+            databaseData.estados.forEach { dao.insertarEstado(it) }
+            databaseData.clientes.forEach { dao.insertarCliente(it) }
 
             // Cargar tareas.json
             val tareasStream = assets.open("tareas.json")
             val tareaListType = object : TypeToken<List<TareaJson>>() {}.type
             val tareasJson: List<TareaJson> = gson.fromJson(InputStreamReader(tareasStream), tareaListType)
-
             tareasJson.forEach { tareaJson ->
                 val tarea = Tarea(
                     id = tareaJson.id,
@@ -82,9 +78,9 @@ class MainActivity : ComponentActivity() {
                     provinciaId = tareaJson.provinciaId,
                     unidadNegocioId = tareaJson.unidadNegocioId,
                     usuarioId = tareaJson.usuarioId,
-                    proyectoId = 1, // Default value
-                    ciudadId = 1,   // Default value
-                    agenciaId = 1   // Default value
+                    proyectoId = 1,
+                    ciudadId = 1,
+                    agenciaId = 1
                 )
                 dao.insertarTarea(tarea)
                 tareaJson.equipos.forEach { equipoJson ->
@@ -92,11 +88,25 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Cargar Actividades de Mantenimiento
+            // Cargar actividadesMantenimiento.json
             val actividadesStream = assets.open("actividadesMantenimiento.json")
             val actividadesData: ActividadesJsonData = gson.fromJson(InputStreamReader(actividadesStream), ActividadesJsonData::class.java)
-            actividadesData.actividades.forEach { dao.insertarActividadMantenimiento(it) }
-            actividadesData.posiblesRespuestas.forEach { dao.insertarPosibleRespuesta(it) }
+            actividadesData.actividadesPreventivo.forEach { actividadJson ->
+                val actividad = ActividadMantenimiento(id = actividadJson.id, nombre = actividadJson.nombre, tipo = "preventivo")
+                dao.insertarActividadMantenimiento(actividad)
+                actividadJson.posiblesRespuestas.forEach { respuestaJson ->
+                    val respuesta = PosibleRespuesta(id = respuestaJson.id, label = respuestaJson.label, value = respuestaJson.value, actividadId = actividad.id)
+                    dao.insertarPosibleRespuesta(respuesta)
+                }
+            }
+            actividadesData.actividadesCorrectivo.forEach { actividadJson ->
+                val actividad = ActividadMantenimiento(id = actividadJson.id + 100, nombre = actividadJson.nombre, tipo = "correctivo")
+                dao.insertarActividadMantenimiento(actividad)
+                actividadJson.posiblesRespuestas.forEach { respuestaJson ->
+                    val respuesta = PosibleRespuesta(id = respuestaJson.id + 100, label = respuestaJson.label, value = respuestaJson.value, actividadId = actividad.id)
+                    dao.insertarPosibleRespuesta(respuesta)
+                }
+            }
 
             prefs.edit {
                 putBoolean("is_first_run", false)
@@ -104,7 +114,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // --- DATA CLASSES CORREGIDAS PARA COINCIDIR CON LOS JSON ---
+    // --- DATA CLASSES CORREGIDAS PARA COINCIDIR 100% CON LOS JSON ---
 
     private data class TareaJson(
         val id: Int,
@@ -126,30 +136,35 @@ class MainActivity : ComponentActivity() {
     }
 
     private data class DatabaseJsonData(
+        // --- CORRECCIÓN AQUÍ: Faltaba 'roles' ---
+        val roles: List<Rol>,
         val usuarios: List<Usuario>,
         val estados: List<Estado>,
-        val clientes: List<Cliente>,
-        val ubicacion: List<UbicacionJson>
-        // val proyectos: List<Proyecto> // Comentado ya que no hay tabla Proyecto en la BD
-    )
-
-    private data class UbicacionJson(
-        val id: Int,
-        val provincia: String
+        val clientes: List<Cliente>
     )
 
     private data class ActividadesJsonData(
-        val posiblesRespuestas: List<PosibleRespuesta>,
-        val actividades: List<ActividadMantenimiento>
+        val actividadesPreventivo: List<ActividadConRespuestasJson>,
+        val actividadesCorrectivo: List<ActividadConRespuestasJson>
+    )
+
+    private data class ActividadConRespuestasJson(
+        val id: Int,
+        val nombre: String,
+        val posiblesRespuestas: List<RespuestaJson>
+    )
+
+    private data class RespuestaJson(
+        val id: Int,
+        val label: String,
+        val value: String
     )
 }
 
 @Composable
 fun LoadingScreen() {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF33A8FF)),
+        modifier = Modifier.fillMaxSize().background(Color(0xFF33A8FF)),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator(color = Color.White)
