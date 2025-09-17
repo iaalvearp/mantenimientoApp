@@ -14,14 +14,14 @@
     {
       "id": 101,
       "nombre": "Juan Perez",
-      "email": "juan.perez@email.com",
+      "email": "jp@email.com",
       "password": "123",
       "rolId": 1
     },
     {
       "id": 102,
       "nombre": "Maria Lopez",
-      "email": "maria.lopez@email.com",
+      "email": "ml@email.com",
       "password": "456",
       "rolId": 1
     }
