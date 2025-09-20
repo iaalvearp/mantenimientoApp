@@ -3,6 +3,7 @@
     "id": 1,
     "clienteId": 1,
     "provinciaId": 13,
+    "ciudadId": 2,
     "unidadNegocioId": 1,
     "usuarioId": 101,
     "equipos": [
@@ -47,6 +48,7 @@
     "id": 2,
     "clienteId": 1,
     "provinciaId": 13,
+    "ciudadId": 1,
     "unidadNegocioId": 4,
     "usuarioId": 102,
     "equipos": [

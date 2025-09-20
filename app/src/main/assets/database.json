@@ -27,6 +27,13 @@
     }
   ],
 
+  "proyectos": [
+    {
+      "id": 1,
+      "nombre": "CORP SERVICIO DE SOPORTE MANTENIMIENTO Y GARANTÍA DE LOS EQUIPOS DE NETWORKING HUAWEI DE CNEL EP GTI"
+    }
+  ],
+
   "clientes": [
     {
       "id": 1,
@@ -37,12 +44,38 @@
 
   "ubicacion": [
     {
+      "id": 9,
+      "provincia": "GUAYAS",
+      "ciudades": [
+        { "id": 3, "nombre": "GUAYAQUIL" },
+        { "id": 4, "nombre": "DURAN" }
+      ],
+      "unidadNegocio": [
+        {
+          "id": 1,
+          "nombre": "AGENCIA GUAYAQUIL",
+          "ciudad": 1,
+          "agencia": [
+            {
+              "id": 1,
+              "nombre": "POR DEFINIR"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": 13,
       "provincia": "MANABI",
+      "ciudades": [
+        { "id": 1, "nombre": "MANTA" },
+        { "id": 2, "nombre": "PORTOVIEJO" }
+      ],
       "unidadNegocio": [
         {
           "id": 1,
           "nombre": "AGENCIA PRIZA",
+          "ciudad": 1,
           "agencia": [
             {
               "id": 1,
@@ -53,6 +86,7 @@
         {
           "id": 2,
           "nombre": "AGENCIA PORTOVIEJO COMERCIAL",
+          "ciudad": 2,
           "agencia": [
             {
               "id": 1,
@@ -63,6 +97,7 @@
         {
           "id": 3,
           "nombre": "SUBESTACION MANTA 1",
+          "ciudad": 1,
           "agencia": [
             {
               "id": 1,
@@ -73,6 +108,7 @@
         {
           "id": 4,
           "nombre": "EQUIPOS EN POSTE",
+          "ciudad": 2,
           "agencia": [
             {
               "id": 1,

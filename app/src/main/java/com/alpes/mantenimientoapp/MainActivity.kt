@@ -57,30 +57,86 @@ class MainActivity : ComponentActivity() {
             val dao = database.appDao()
             val gson = Gson()
 
-            // Cargar database.json
+            // --- 1. CARGA DE DATOS GENERALES Y CREACIÓN DE MAPAS PARA BÚSQUEDA ---
             val databaseStream = assets.open("database.json")
             val databaseData: DatabaseJsonData = gson.fromJson(InputStreamReader(databaseStream), DatabaseJsonData::class.java)
 
-            // Insertar todos los datos de database.json
             databaseData.roles.forEach { dao.insertarRol(it) }
             databaseData.usuarios.forEach { dao.insertarUsuario(it) }
             databaseData.estados.forEach { dao.insertarEstado(it) }
             databaseData.clientes.forEach { dao.insertarCliente(it) }
 
-            // Cargar tareas.json
+            // ¡NUEVO! Leemos los proyectos del JSON y los insertamos
+            databaseData.proyectos.forEach { dao.insertarProyecto(it) }
+
+            // Creamos un mapa para buscar Agencias fácilmente después
+            val unidadNegocioMap = mutableMapOf<Int, UnidadNegocioJson>()
+
+            databaseData.ubicacion.forEach { ubi ->
+                dao.insertarProvincia(Provincia(id = ubi.id, nombre = ubi.provincia))
+                ubi.ciudades.forEach { ciudadJson ->
+                    // CORRECCIÓN 1: Pasar el provinciaId a la Ciudad
+                    dao.insertarCiudad(Ciudad(id = ciudadJson.id, nombre = ciudadJson.nombre, provinciaId = ubi.id))
+                }
+                ubi.unidadNegocio.forEach { unJson ->
+                    // CORRECCIÓN 2: Pasar el provinciaId a la UnidadNegocio
+                    dao.insertarUnidadNegocio(UnidadNegocio(id = unJson.id, nombre = unJson.nombre, ciudadId = unJson.ciudad, provinciaId = ubi.id))
+
+                    // El resto del código se mantiene igual
+                    unidadNegocioMap[unJson.id] = unJson
+                    unJson.agencia.forEach { agenciaJson ->
+                        dao.insertarAgencia(Agencia(id = agenciaJson.id, nombre = agenciaJson.nombre, unidadNegocioId = unJson.id))
+                    }
+                }
+            }
+
+            // --- 2. CARGA DE ACTIVIDADES DE MANTENIMIENTO ---
+            val actividadesStream = assets.open("actividadesMantenimiento.json")
+            val actividadesData: ActividadesJsonData = gson.fromJson(InputStreamReader(actividadesStream), ActividadesJsonData::class.java)
+
+            // Función auxiliar para no repetir código
+            suspend fun insertarActividades(lista: List<ActividadConRespuestasJson>, tipo: String, idOffset: Int) {
+                lista.forEach { actividadJson ->
+                    val actividad = ActividadMantenimiento(id = actividadJson.id + idOffset, nombre = actividadJson.nombre, tipo = tipo)
+                    dao.insertarActividadMantenimiento(actividad)
+                    actividadJson.posiblesRespuestas.forEachIndexed { index, respuestaJson ->
+                        // Creamos un ID único y predecible para cada posible respuesta
+                        val prId = (actividad.id * 100) + index
+                        dao.insertarPosibleRespuesta(PosibleRespuesta(id = prId, label = respuestaJson.label, value = respuestaJson.value, actividadId = actividad.id))
+                    }
+                }
+            }
+
+            insertarActividades(actividadesData.actividadesPreventivo, "preventivo", 0)
+            insertarActividades(actividadesData.actividadesCorrectivo, "correctivo", 100) // Offset para evitar colisión de IDs
+
+
+            // --- 3. CARGA INTELIGENTE DE TAREAS ---
             val tareasStream = assets.open("tareas.json")
             val tareaListType = object : TypeToken<List<TareaJson>>() {}.type
             val tareasJson: List<TareaJson> = gson.fromJson(InputStreamReader(tareasStream), tareaListType)
+
             tareasJson.forEach { tareaJson ->
+                // Buscamos la unidad de negocio en nuestro mapa para encontrar la agencia
+                val unidadNegocio = unidadNegocioMap[tareaJson.unidadNegocioId]
+
+                // Deducimos la agenciaId. Usamos '1' como valor de respaldo si algo falla.
+                val agenciaIdDeducida = unidadNegocio?.agencia?.firstOrNull()?.id ?: 1
+
+                // Asumimos que todas las tareas pertenecen al único proyecto que tenemos.
+                // Si hubiera más, aquí iría una lógica para buscar el proyecto correcto.
+                val proyectoIdAsignado = 1
+
                 val tarea = Tarea(
                     id = tareaJson.id,
                     clienteId = tareaJson.clienteId,
                     provinciaId = tareaJson.provinciaId,
                     unidadNegocioId = tareaJson.unidadNegocioId,
                     usuarioId = tareaJson.usuarioId,
-                    proyectoId = 1,
-                    ciudadId = 1,
-                    agenciaId = 1
+                    // --- VALORES CORREGIDOS Y DINÁMICOS ---
+                    proyectoId = proyectoIdAsignado,
+                    ciudadId = tareaJson.ciudadId,      // Usamos el valor real del JSON
+                    agenciaId = agenciaIdDeducida       // Usamos el valor que deducimos
                 )
                 dao.insertarTarea(tarea)
                 tareaJson.equipos.forEach { equipoJson ->
@@ -88,38 +144,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Cargar actividadesMantenimiento.json
-            val actividadesStream = assets.open("actividadesMantenimiento.json")
-            val actividadesData: ActividadesJsonData = gson.fromJson(InputStreamReader(actividadesStream), ActividadesJsonData::class.java)
-            actividadesData.actividadesPreventivo.forEach { actividadJson ->
-                val actividad = ActividadMantenimiento(id = actividadJson.id, nombre = actividadJson.nombre, tipo = "preventivo")
-                dao.insertarActividadMantenimiento(actividad)
-                actividadJson.posiblesRespuestas.forEach { respuestaJson ->
-                    val respuesta = PosibleRespuesta(id = respuestaJson.id, label = respuestaJson.label, value = respuestaJson.value, actividadId = actividad.id)
-                    dao.insertarPosibleRespuesta(respuesta)
-                }
-            }
-            actividadesData.actividadesCorrectivo.forEach { actividadJson ->
-                val actividad = ActividadMantenimiento(id = actividadJson.id + 100, nombre = actividadJson.nombre, tipo = "correctivo")
-                dao.insertarActividadMantenimiento(actividad)
-                actividadJson.posiblesRespuestas.forEach { respuestaJson ->
-                    val respuesta = PosibleRespuesta(id = respuestaJson.id + 100, label = respuestaJson.label, value = respuestaJson.value, actividadId = actividad.id)
-                    dao.insertarPosibleRespuesta(respuesta)
-                }
-            }
-
-            prefs.edit {
-                putBoolean("is_first_run", false)
-            }
+            prefs.edit { putBoolean("is_first_run", false) }
         }
     }
 
-    // --- DATA CLASSES CORREGIDAS PARA COINCIDIR 100% CON LOS JSON ---
+    // --- DATA CLASSES INTERNAS PARA LEER LOS JSON ---
 
     private data class TareaJson(
         val id: Int,
         val clienteId: Int,
         val provinciaId: Int,
+        val ciudadId: Int, // <-- CAMPO AÑADIDO Y NECESARIO
         val unidadNegocioId: Int,
         val usuarioId: Int,
         val equipos: List<EquipoJson>
@@ -132,16 +167,29 @@ class MainActivity : ComponentActivity() {
         val caracteristicas: String,
         val estadoId: Int
     ) {
-        fun toEquipo(tareaId: Int): Equipo = Equipo(id, nombre, modelo, caracteristicas, estadoId, tareaId)
+        // CORRECCIÓN: La función ahora coincide con la nueva estructura de la clase Equipo
+        fun toEquipo(tareaId: Int): Equipo = Equipo(id, nombre, modelo, caracteristicas, estadoId, tareaId, syncPending = false)
     }
 
     private data class DatabaseJsonData(
-        // --- CORRECCIÓN AQUÍ: Faltaba 'roles' ---
         val roles: List<Rol>,
         val usuarios: List<Usuario>,
-        val estados: List<Estado>,
-        val clientes: List<Cliente>
+        val clientes: List<Cliente>,
+        val proyectos: List<Proyecto>, // <-- CAMPO AÑADIDO PARA LEER TUS PROYECTOS
+        val ubicacion: List<UbicacionJson>,
+        val estados: List<Estado>
     )
+
+    private data class UbicacionJson(
+        val id: Int,
+        val provincia: String,
+        val ciudades: List<CiudadJson>,
+        val unidadNegocio: List<UnidadNegocioJson>
+    )
+
+    private data class CiudadJson(val id: Int, val nombre: String)
+    private data class UnidadNegocioJson(val id: Int, val nombre: String, val ciudad: Int, val agencia: List<AgenciaJson>)
+    private data class AgenciaJson(val id: Int, val nombre: String)
 
     private data class ActividadesJsonData(
         val actividadesPreventivo: List<ActividadConRespuestasJson>,
@@ -158,13 +206,26 @@ class MainActivity : ComponentActivity() {
         val id: Int,
         val label: String,
         val value: String
-    )
+    ) {
+        companion object {
+            fun toPosibleRespuesta(json: RespuestaJson, actividadId: Int): PosibleRespuesta {
+                return PosibleRespuesta(
+                    id = json.id,
+                    label = json.label,
+                    value = json.value,
+                    actividadId = actividadId
+                )
+            }
+        }
+    }
 }
 
 @Composable
 fun LoadingScreen() {
     Box(
-        modifier = Modifier.fillMaxSize().background(Color(0xFF33A8FF)),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF33A8FF)),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator(color = Color.White)

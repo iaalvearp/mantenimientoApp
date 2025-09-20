@@ -3,10 +3,15 @@ package com.alpes.mantenimientoapp
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -59,13 +64,27 @@ fun ChecklistItem(
 
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = itemState.actividad.actividad.nombre,
-                style = MaterialTheme.typography.titleMedium,
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { isExpanded = !isExpanded }
-            )
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple(),
+                        onClick = { isExpanded = !isExpanded }
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = itemState.actividad.actividad.nombre,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (isExpanded) "Cerrar" else "Expandir"
+                )
+            }
 
             AnimatedVisibility(visible = isExpanded) {
                 Column {
@@ -74,22 +93,28 @@ fun ChecklistItem(
                         Row(
                             Modifier
                                 .fillMaxWidth()
+                                // --- INICIO DE LA NUEVA Y FINAL CORRECCIÓN ---
                                 .selectable(
                                     selected = (itemState.respuestaSeleccionada?.id == respuesta.id),
+                                    // Añadimos explícitamente la interacción y el efecto visual para máxima compatibilidad
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = rememberRipple(),
                                     onClick = { onResponseSelected(respuesta) }
                                 )
+                                // --- FIN DE LA NUEVA Y FINAL CORRECCIÓN ---
                                 .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
                                 selected = (itemState.respuestaSeleccionada?.id == respuesta.id),
+                                // El onClick del RadioButton puede ser nulo si el Row ya lo maneja,
+                                // pero dejarlo aquí también es seguro.
                                 onClick = { onResponseSelected(respuesta) }
                             )
                             Text(text = respuesta.label, modifier = Modifier.padding(start = 8.dp))
                         }
                     }
 
-                    // El campo de observación aparece si se ha seleccionado cualquier respuesta
                     if (itemState.respuestaSeleccionada != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(

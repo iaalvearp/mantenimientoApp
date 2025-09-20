@@ -88,20 +88,35 @@ fun TaskDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text("INFORMACIÓN GENERAL", style = MaterialTheme.typography.titleMedium)
-                        DropdownField(label = "Cliente", options = listOf(cliente?.nombreCompleto ?: "Cargando..."), isTall = true)
-                        DropdownField(label = "Nombre del proyecto", options = listOf(proyecto?.nombre ?: "Cargando..."), isTall = true)
+                        DropdownField(label = "Cliente", options = listOf(uiState.cliente?.nombreCompleto ?: ""), selectedValue = uiState.cliente?.nombreCompleto)
+                        DropdownField(label = "Nombre del proyecto", options = listOf(uiState.proyecto?.nombre ?: ""), selectedValue = uiState.proyecto?.nombre)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Provincia", options = listOf(provincia?.nombre ?: "Cargando...")) }
-                            Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Ciudad", options = listOf("GUAYAQUIL")) }
+                            Box(modifier = Modifier.weight(1f)) { DropdownField(label = "Provincia", options = listOf(uiState.provincia?.nombre ?: ""), selectedValue = uiState.provincia?.nombre) }
+                            Box(modifier = Modifier.weight(1f)) {
+                                // Este dropdown ahora muestra opciones reales
+                                DropdownField(
+                                    label = "Ciudad",
+                                    options = uiState.ciudadesOptions.map { it.nombre },
+                                    selectedValue = uiState.ciudad?.nombre
+                                )
+                            }
                         }
-                        DropdownField(label = "Unidad de negocio", options = listOf("UNIDAD XYZ"))
+                        DropdownField(
+                            label = "Unidad de negocio",
+                            options = uiState.unidadesNegocioOptions.map { it.nombre },
+                            selectedValue = uiState.unidadNegocio?.nombre
+                        )
                         DateField(selectedDateMillis = selectedDateMillis, onClick = { showDatePicker = true })
-                        DropdownField(label = "Agencia, oficina, subestación", options = listOf("SUBESTACIÓN MANTA 1..."), isTall = true)
+                        DropdownField(
+                            label = "Agencia, oficina, subestación",
+                            options = uiState.agenciasOptions.map { it.nombre },
+                            selectedValue = uiState.agencia?.nombre
+                        )
 
                         Text("INFORMACIÓN DE EQUIPO", style = MaterialTheme.typography.titleMedium)
-                        DropdownField(label = "Tipo de equipo", options = listOf(equipo?.nombre ?: "Cargando..."))
-                        DropdownField(label = "Número de serie", options = listOf(equipo?.id ?: "Cargando..."))
-                        DropdownField(label = "Modelo del equipo", options = listOf(equipo?.modelo ?: "Cargando..."))
+                        DropdownField(label = "Tipo de equipo", options = listOf(equipo?.nombre ?: ""), selectedValue = equipo?.nombre)
+                        DropdownField(label = "Número de serie", options = listOf(equipo?.id ?: ""), selectedValue = equipo?.id)
+                        DropdownField(label = "Modelo del equipo", options = listOf(equipo?.modelo ?: ""), selectedValue = equipo?.modelo)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -143,11 +158,12 @@ fun TaskDetailScreen(
 private fun DropdownField(
     label: String,
     options: List<String>,
-    initialValue: String = options.firstOrNull() ?: "",
-    isTall: Boolean = false
+    selectedValue: String?, // <-- AÑADE ESTO
+    isTall: Boolean = false // (lo quité de la firma pero puedes dejarlo si lo usas)
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedOptionText by remember { mutableStateOf(initialValue) }
+    // El texto seleccionado ahora viene del estado del ViewModel
+    var selectedOptionText by remember(selectedValue) { mutableStateOf(selectedValue ?: options.firstOrNull() ?: "") }
     LaunchedEffect(options) {
         if (options.isNotEmpty()) {
             selectedOptionText = options.first()
@@ -216,6 +232,8 @@ private fun DateField(selectedDateMillis: Long, onClick: () -> Unit) {
 
 // --- VISTA PREVIA Y CLASES FALSAS (MOCKS) ---
 
+// DENTRO DE TaskDetailScreen.kt
+
 private class FakeAppDao : AppDao {
     override suspend fun insertarUsuario(usuario: Usuario) {}
     override suspend fun insertarTarea(tarea: Tarea) {}
@@ -227,6 +245,19 @@ private class FakeAppDao : AppDao {
     override suspend fun insertarActividadMantenimiento(actividad: ActividadMantenimiento) {}
     override suspend fun insertarPosibleRespuesta(respuesta: PosibleRespuesta) {}
     override suspend fun insertarRol(rol: Rol) {}
+    override suspend fun insertarUnidadNegocio(unidadNegocio: UnidadNegocio) {}
+    override suspend fun insertarAgencia(agencia: Agencia) {}
+    override suspend fun insertarCiudad(ciudad: Ciudad) {}
+
+    // --- MÉTODOS AÑADIDOS ---
+    override suspend fun obtenerCiudadesPorProvincia(idDeLaProvincia: Int): List<Ciudad> = emptyList()
+    override suspend fun obtenerUnidadesNegocioPorProvincia(idDeLaProvincia: Int): List<UnidadNegocio> = emptyList()
+    override suspend fun obtenerAgenciasPorUnidadNegocio(idDeLaUnidad: Int): List<Agencia> = emptyList()
+    override suspend fun obtenerUnidadNegocioPorId(unidadNegocioId: Int): UnidadNegocio? = null
+    // --- FIN ---
+
+    override suspend fun obtenerCiudadPorId(ciudadId: Int): Ciudad? = null
+    override suspend fun obtenerAgenciaPorId(agenciaId: Int): Agencia? = null
     override suspend fun obtenerEquiposPorTarea(idDeLaTarea: Int): List<Equipo> = emptyList()
     override suspend fun obtenerTareasPorUsuario(idDelUsuario: Int): List<Tarea> = emptyList()
     override suspend fun obtenerUsuarioPorId(userId: Int): Usuario? = null
@@ -252,7 +283,8 @@ private class PreviewTaskDetailViewModel(initialState: TaskDetailUiState) : Task
 @Composable
 fun TaskDetailScreenPreview() {
     val previewState = TaskDetailUiState(
-        equipo = Equipo("PREVIEW-ID-123", "ROUTER DE PRUEBA", "MODELO-XYZ", "", 1, 1),
+        // AQUÍ ESTÁ LA CORRECCIÓN
+        equipo = Equipo("PREVIEW-ID-123", "ROUTER DE PRUEBA", "MODELO-XYZ", "", 1, 1, syncPending = false),
         cliente = Cliente(1, "CNEL", "CORPORACIÓN NACIONAL DE ELECTRICIDAD"),
         proyecto = Proyecto(1, "SOPORTE Y MANTENIMIENTO"),
         provincia = Provincia(1, "GUAYAS")

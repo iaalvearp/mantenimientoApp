@@ -34,6 +34,16 @@ interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarRol(rol: Rol)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarUnidadNegocio(unidadNegocio: UnidadNegocio)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarAgencia(agencia: Agencia)
+
+    // En AppDao.kt, dentro de la interfaz
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarCiudad(ciudad: Ciudad)
+
     @Query("SELECT * FROM equipos WHERE tareaId = :idDeLaTarea")
     suspend fun obtenerEquiposPorTarea(idDeLaTarea: Int): List<Equipo>
 
@@ -73,4 +83,22 @@ interface AppDao {
     @Transaction
     @Query("SELECT * FROM actividades_mantenimiento WHERE tipo = :tipo")
     suspend fun obtenerActividadesConRespuestas(tipo: String): List<ActividadConRespuestas>
+
+    @Query("SELECT * FROM ciudades WHERE id = :ciudadId LIMIT 1")
+    suspend fun obtenerCiudadPorId(ciudadId: Int): Ciudad?
+
+    @Query("SELECT * FROM agencias WHERE id = :agenciaId LIMIT 1")
+    suspend fun obtenerAgenciaPorId(agenciaId: Int): Agencia?
+
+    @Query("SELECT * FROM ciudades WHERE provinciaId = :idDeLaProvincia")
+    suspend fun obtenerCiudadesPorProvincia(idDeLaProvincia: Int): List<Ciudad>
+
+    @Query("SELECT * FROM unidades_negocio WHERE provinciaId = :idDeLaProvincia")
+    suspend fun obtenerUnidadesNegocioPorProvincia(idDeLaProvincia: Int): List<UnidadNegocio>
+
+    @Query("SELECT * FROM agencias WHERE unidadNegocioId = :idDeLaUnidad")
+    suspend fun obtenerAgenciasPorUnidadNegocio(idDeLaUnidad: Int): List<Agencia>
+
+    @Query("SELECT * FROM unidades_negocio WHERE id = :unidadNegocioId LIMIT 1")
+    suspend fun obtenerUnidadNegocioPorId(unidadNegocioId: Int): UnidadNegocio?
 }

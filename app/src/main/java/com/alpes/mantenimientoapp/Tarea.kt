@@ -1,4 +1,3 @@
-// Archivo: Tarea.kt
 package com.alpes.mantenimientoapp
 
 import androidx.room.Entity
@@ -11,7 +10,7 @@ data class Tarea(
     val provinciaId: Int,
     val unidadNegocioId: Int,
     val usuarioId: Int,
-    // --- CAMPOS AÑADIDOS ---
+    // --- CAMPOS CORREGIDOS ---
     val proyectoId: Int,
     val ciudadId: Int,
     val agenciaId: Int

@@ -13,13 +13,12 @@ import androidx.room.RoomDatabase
 @Database(
     entities = [
         Usuario::class, Tarea::class, Equipo::class, Estado::class,
-        Cliente::class, Proyecto::class, Provincia::class,
-        // --- AÑADE ESTAS LÍNEAS ---
-        ActividadMantenimiento::class,
-        PosibleRespuesta::class,
-        Rol::class
+        Cliente::class, Proyecto::class, Provincia::class, Rol::class,
+        ActividadMantenimiento::class, PosibleRespuesta::class,
+        // --- AÑADIMOS LAS NUEVAS TABLAS ---
+        Ciudad::class, Agencia::class, UnidadNegocio::class
     ],
-    version = 4, // <-- IMPORTANTE: Aumenta la versión a 3
+    version = 9, // <-- AUMENTAMOS LA VERSIÓN
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,7 +33,6 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
-
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -42,7 +40,6 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "mantenimiento_database"
                 )
-                    // AÑADE ESTA LÍNEA AQUÍ
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

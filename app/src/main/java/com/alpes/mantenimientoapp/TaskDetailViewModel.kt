@@ -12,7 +12,13 @@ data class TaskDetailUiState(
     val tarea: Tarea? = null,
     val cliente: Cliente? = null,
     val proyecto: Proyecto? = null,
-    val provincia: Provincia? = null
+    val provincia: Provincia? = null,
+    val ciudad: Ciudad? = null,
+    val unidadNegocio: UnidadNegocio? = null,
+    val agencia: Agencia? = null,
+    val ciudadesOptions: List<Ciudad> = emptyList(),
+    val unidadesNegocioOptions: List<UnidadNegocio> = emptyList(),
+    val agenciasOptions: List<Agencia> = emptyList()
 )
 
 open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
@@ -23,12 +29,19 @@ open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
     open fun loadDataForEquipo(equipoId: String) {
         viewModelScope.launch {
             val equipo = dao.obtenerEquipoPorId(equipoId)
-            if (equipo != null) {
-                val tarea = dao.obtenerTareaPorId(equipo.tareaId)
+            val tarea = equipo?.let { dao.obtenerTareaPorId(it.tareaId) }
 
-                val cliente = tarea?.clienteId?.let { dao.obtenerClientePorId(it) }
-                val proyecto = tarea?.proyectoId?.let { dao.obtenerProyectoPorId(it) }
-                val provincia = tarea?.provinciaId?.let { dao.obtenerProvinciaPorId(it) }
+            if (tarea != null) {
+                val cliente = dao.obtenerClientePorId(tarea.clienteId)
+                val proyecto = dao.obtenerProyectoPorId(tarea.proyectoId)
+                val provincia = dao.obtenerProvinciaPorId(tarea.provinciaId)
+                val ciudad = dao.obtenerCiudadPorId(tarea.ciudadId)
+                val unidadNegocio = dao.obtenerUnidadNegocioPorId(tarea.unidadNegocioId)
+                val agencia = dao.obtenerAgenciaPorId(tarea.agenciaId)
+
+                val ciudadesOptions = provincia?.id?.let { dao.obtenerCiudadesPorProvincia(it) } ?: emptyList()
+                val unidadesNegocioOptions = provincia?.id?.let { dao.obtenerUnidadesNegocioPorProvincia(it) } ?: emptyList()
+                val agenciasOptions = unidadNegocio?.id?.let { dao.obtenerAgenciasPorUnidadNegocio(it) } ?: emptyList()
 
                 _uiState.update {
                     it.copy(
@@ -36,7 +49,13 @@ open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
                         tarea = tarea,
                         cliente = cliente,
                         proyecto = proyecto,
-                        provincia = provincia
+                        provincia = provincia,
+                        ciudad = ciudad,
+                        unidadNegocio = unidadNegocio,
+                        agencia = agencia,
+                        ciudadesOptions = ciudadesOptions,
+                        unidadesNegocioOptions = unidadesNegocioOptions,
+                        agenciasOptions = agenciasOptions
                     )
                 }
             }
