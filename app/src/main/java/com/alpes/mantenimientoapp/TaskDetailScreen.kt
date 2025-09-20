@@ -122,7 +122,8 @@ fun TaskDetailScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = onNextClicked,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))
                     ) {
                         Text("SIGUIENTE")
@@ -182,7 +183,7 @@ private fun DropdownField(
             onValueChange = {},
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(unfocusedContainerColor = Color(0xFFF0F0F0)),
+            colors = ExposedDropdownMenuDefaults.textFieldColors(unfocusedContainerColor = Color(0xFFFFFFFF)),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { selectionOption ->
@@ -231,9 +232,6 @@ private fun DateField(selectedDateMillis: Long, onClick: () -> Unit) {
 }
 
 // --- VISTA PREVIA Y CLASES FALSAS (MOCKS) ---
-
-// DENTRO DE TaskDetailScreen.kt
-
 private class FakeAppDao : AppDao {
     override suspend fun insertarUsuario(usuario: Usuario) {}
     override suspend fun insertarTarea(tarea: Tarea) {}
@@ -249,13 +247,14 @@ private class FakeAppDao : AppDao {
     override suspend fun insertarAgencia(agencia: Agencia) {}
     override suspend fun insertarCiudad(ciudad: Ciudad) {}
 
-    // --- MÉTODOS AÑADIDOS ---
+    // --- ESTA ES LA LÍNEA QUE FALTABA ---
+    override suspend fun insertarResultado(resultado: MantenimientoResultado) {}
+    // --- FIN DE LA CORRECCIÓN ---
+
     override suspend fun obtenerCiudadesPorProvincia(idDeLaProvincia: Int): List<Ciudad> = emptyList()
     override suspend fun obtenerUnidadesNegocioPorProvincia(idDeLaProvincia: Int): List<UnidadNegocio> = emptyList()
     override suspend fun obtenerAgenciasPorUnidadNegocio(idDeLaUnidad: Int): List<Agencia> = emptyList()
     override suspend fun obtenerUnidadNegocioPorId(unidadNegocioId: Int): UnidadNegocio? = null
-    // --- FIN ---
-
     override suspend fun obtenerCiudadPorId(ciudadId: Int): Ciudad? = null
     override suspend fun obtenerAgenciaPorId(agenciaId: Int): Agencia? = null
     override suspend fun obtenerEquiposPorTarea(idDeLaTarea: Int): List<Equipo> = emptyList()

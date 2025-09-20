@@ -18,18 +18,46 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PreventiveChecklistScreen(
+    equipoId: String, // <-- Recibimos el ID del equipo
     viewModel: ChecklistViewModel,
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val showDialog by viewModel.showSaveConfirmation.collectAsStateWithLifecycle()
+
+    // Estado para controlar qué item está expandido (acordeón exclusivo)
+    var expandedItemId by remember { mutableStateOf<Int?>(null) }
+
+    // Efecto para volver atrás cuando el diálogo se cierra
+    LaunchedEffect(key1 = Unit) {
+        viewModel.loadChecklistData("preventivo")
+    }
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Checklist Preventivo") })
+            TopAppBar(
+                title = { Text("Checklist Preventivo") },
+                // Flecha para volver atrás
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                    }
+                }
+            )
+        },
+        // Botón flotante para guardar
+        floatingActionButton = {
+            FloatingActionButton(onClick = { viewModel.saveChecklist(equipoId) }) {
+                Icon(Icons.Default.Save, contentDescription = "Guardar")
+            }
         }
     ) { paddingValues ->
         LazyColumn(
@@ -42,6 +70,14 @@ fun PreventiveChecklistScreen(
             items(uiState.items) { itemState ->
                 ChecklistItem(
                     itemState = itemState,
+                    isExpanded = expandedItemId == itemState.actividad.actividad.id,
+                    onExpand = {
+                        expandedItemId = if (expandedItemId == itemState.actividad.actividad.id) {
+                            null // Si ya está expandido, lo cerramos
+                        } else {
+                            itemState.actividad.actividad.id // Si no, lo expandimos
+                        }
+                    },
                     onResponseSelected = { respuesta ->
                         viewModel.onResponseSelected(itemState.actividad.actividad.id, respuesta)
                     },
@@ -51,17 +87,36 @@ fun PreventiveChecklistScreen(
                 )
             }
         }
+
+        // Diálogo de confirmación de guardado
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissSaveConfirmation() },
+                title = { Text("Éxito") },
+                text = { Text("El mantenimiento se ha guardado correctamente.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.dismissSaveConfirmation()
+                            onNavigateBack() // Volvemos a la pantalla anterior
+                        }
+                    ) {
+                        Text("Aceptar")
+                    }
+                }
+            )
+        }
     }
 }
 
 @Composable
 fun ChecklistItem(
     itemState: ChecklistItemState,
+    isExpanded: Boolean,
+    onExpand: () -> Unit,
     onResponseSelected: (PosibleRespuesta) -> Unit,
     onObservationChanged: (String) -> Unit
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
-
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -70,7 +125,7 @@ fun ChecklistItem(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = rememberRipple(),
-                        onClick = { isExpanded = !isExpanded }
+                        onClick = { onExpand() }
                     ),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -93,29 +148,30 @@ fun ChecklistItem(
                         Row(
                             Modifier
                                 .fillMaxWidth()
-                                // --- INICIO DE LA NUEVA Y FINAL CORRECCIÓN ---
                                 .selectable(
                                     selected = (itemState.respuestaSeleccionada?.id == respuesta.id),
-                                    // Añadimos explícitamente la interacción y el efecto visual para máxima compatibilidad
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = rememberRipple(),
                                     onClick = { onResponseSelected(respuesta) }
                                 )
-                                // --- FIN DE LA NUEVA Y FINAL CORRECCIÓN ---
                                 .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
                                 selected = (itemState.respuestaSeleccionada?.id == respuesta.id),
-                                // El onClick del RadioButton puede ser nulo si el Row ya lo maneja,
-                                // pero dejarlo aquí también es seguro.
                                 onClick = { onResponseSelected(respuesta) }
                             )
                             Text(text = respuesta.label, modifier = Modifier.padding(start = 8.dp))
                         }
                     }
 
-                    if (itemState.respuestaSeleccionada != null) {
+                    // --- LÓGICA DE OBSERVACIÓN CORREGIDA ---
+                    // El campo de texto solo aparece si la respuesta seleccionada
+                    // es "Regular", "Mal" o "Muy Mal".
+                    val respuestaSeleccionadaValue = itemState.respuestaSeleccionada?.value
+                    val mostrarCampoObservacion = respuestaSeleccionadaValue in listOf("regular", "mal", "muy_mal")
+
+                    if (mostrarCampoObservacion) {
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(
                             value = itemState.observacion,

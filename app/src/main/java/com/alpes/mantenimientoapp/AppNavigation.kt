@@ -73,27 +73,39 @@ fun AppNavigation() {
                 onNavigateBack = { navController.popBackStack() },
                 // Le decimos qué hacer cuando se presione "SIGUIENTE"
                 onNextClicked = {
-                    navController.navigate("maintenanceActivities")
+                    navController.navigate("maintenanceActivities/$equipoId")
                 }
             )
         }
 
-        composable("maintenanceActivities") {
+        composable(
+            route = "maintenanceActivities/{equipoId}",
+            arguments = listOf(navArgument("equipoId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
             MaintenanceActivitiesScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onPreventiveClicked = {
-                    // Navegamos a la nueva pantalla de checklist
-                    navController.navigate("preventiveChecklist")
+                    navController.navigate("preventiveChecklist/$equipoId")
                 },
                 onCorrectiveClicked = { /* TODO */ },
-                onNextClicked = { /* TODO */ }
+                // Volvemos a añadir onNextClicked, aunque por ahora no haga nada
+                onNextClicked = {
+                    // TODO: Aquí irá la lógica para navegar a la siguiente pantalla
+                    // después del checklist, por ejemplo, una pantalla de resumen.
+                }
             )
         }
 
 // --- NUEVA RUTA PARA LA CHECKLIST ---
-        composable("preventiveChecklist") {
+        composable(
+            route = "preventiveChecklist/{equipoId}",
+            arguments = listOf(navArgument("equipoId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
             val checklistViewModel: ChecklistViewModel = viewModel(factory = viewModelFactory)
             PreventiveChecklistScreen(
+                equipoId = equipoId, // <-- Pasamos el ID
                 viewModel = checklistViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )

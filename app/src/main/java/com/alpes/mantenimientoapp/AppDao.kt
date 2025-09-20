@@ -44,6 +44,9 @@ interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarCiudad(ciudad: Ciudad)
 
+    @Insert
+    suspend fun insertarResultado(resultado: MantenimientoResultado)
+
     @Query("SELECT * FROM equipos WHERE tareaId = :idDeLaTarea")
     suspend fun obtenerEquiposPorTarea(idDeLaTarea: Int): List<Equipo>
 

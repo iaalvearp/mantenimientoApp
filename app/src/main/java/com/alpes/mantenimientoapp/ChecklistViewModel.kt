@@ -25,20 +25,51 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
     private val _uiState = MutableStateFlow(ChecklistUiState())
     val uiState = _uiState.asStateFlow()
 
-    init {
-        loadChecklistData("preventivo")
-    }
+    // Controlará la visibilidad del diálogo de confirmación
+    private val _showSaveConfirmation = MutableStateFlow(false)
+    val showSaveConfirmation = _showSaveConfirmation.asStateFlow()
 
     fun loadChecklistData(tipo: String) {
         viewModelScope.launch {
             val actividades = dao.obtenerActividadesConRespuestas(tipo)
             _uiState.update {
                 it.copy(
-                    items = actividades.map { actividad -> ChecklistItemState(actividad = actividad) },
+                    items = actividades.map { actividad ->
+                        // LÓGICA DE SELECCIÓN POR DEFECTO
+                        val defaultResponse = actividad.posiblesRespuestas
+                            .find { pr -> pr.label.equals("No fue necesario", ignoreCase = true) }
+
+                        ChecklistItemState(
+                            actividad = actividad,
+                            respuestaSeleccionada = defaultResponse // <-- Asignamos la respuesta por defecto
+                        )
+                    },
                     tipo = tipo
                 )
             }
         }
+    }
+
+    // NUEVA FUNCIÓN DE GUARDADO
+    fun saveChecklist(equipoId: String) {
+        viewModelScope.launch {
+            val itemsToSave = _uiState.value.items
+            itemsToSave.forEach { itemState ->
+                val resultado = MantenimientoResultado(
+                    equipoId = equipoId,
+                    actividadId = itemState.actividad.actividad.id,
+                    respuestaValue = itemState.respuestaSeleccionada?.value,
+                    observacion = itemState.observacion
+                )
+                dao.insertarResultado(resultado)
+            }
+            // Activamos el diálogo de confirmación
+            _showSaveConfirmation.value = true
+        }
+    }
+
+    fun dismissSaveConfirmation() {
+        _showSaveConfirmation.value = false
     }
 
     fun onResponseSelected(actividadId: Int, respuesta: PosibleRespuesta) {
