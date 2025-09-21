@@ -128,7 +128,12 @@ class MainActivity : ComponentActivity() {
             // Función auxiliar para no repetir código
             suspend fun insertarActividades(lista: List<ActividadConRespuestasJson>, tipo: String, idOffset: Int) {
                 lista.forEach { actividadJson ->
-                    val actividad = ActividadMantenimiento(id = actividadJson.id + idOffset, nombre = actividadJson.nombre, tipo = tipo)
+                    val actividad = ActividadMantenimiento(
+                        id = actividadJson.id + idOffset,
+                        nombre = actividadJson.nombre,
+                        tipo = tipo,
+                        tipoSeleccion = actividadJson.type // <-- AÑADE ESTA LÍNEA
+                    )
                     dao.insertarActividadMantenimiento(actividad)
                     actividadJson.posiblesRespuestas.forEachIndexed { index, respuestaJson ->
                         // Creamos un ID único y predecible para cada posible respuesta
@@ -139,7 +144,10 @@ class MainActivity : ComponentActivity() {
             }
 
             insertarActividades(actividadesData.actividadesPreventivo, "preventivo", 0)
-            insertarActividades(actividadesData.actividadesCorrectivo, "correctivo", 100) // Offset para evitar colisión de IDs
+            insertarActividades(actividadesData.actividadesCorrectivo, "correctivo", 100)
+
+            // --- AÑADE ESTA LÍNEA ---
+            insertarActividades(actividadesData.tareasDiagnostico, "diagnostico", 200)
 
 
             // --- 3. CARGA INTELIGENTE DE TAREAS ---
@@ -224,12 +232,14 @@ class MainActivity : ComponentActivity() {
 
     private data class ActividadesJsonData(
         val actividadesPreventivo: List<ActividadConRespuestasJson>,
-        val actividadesCorrectivo: List<ActividadConRespuestasJson>
+        val actividadesCorrectivo: List<ActividadConRespuestasJson>,
+        val tareasDiagnostico: List<ActividadConRespuestasJson> // <-- AÑADE ESTA LÍNEA
     )
 
     private data class ActividadConRespuestasJson(
         val id: Int,
         val nombre: String,
+        val type: String, // <-- Asegúrate de que esta línea exista
         val posiblesRespuestas: List<RespuestaJson>
     )
 

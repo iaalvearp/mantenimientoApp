@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Router
@@ -50,6 +51,11 @@ fun HomeScreen(
             AppDrawerContent(
                 usuario = uiState.usuario,
                 rol = uiState.rol,
+                // --- INICIO DE LA MODIFICACIÓN ---
+                onItemClicked = {
+                    scope.launch { drawerState.close() }
+                },
+                // --- FIN DE LA MODIFICACIÓN ---
                 onLogoutClicked = onLogout
             )
         }
@@ -88,6 +94,7 @@ fun HomeScreen(
 fun AppDrawerContent(
     usuario: Usuario?,
     rol: Rol?,
+    onItemClicked: () -> Unit, // <-- PARÁMETRO AÑADIDO
     onLogoutClicked: () -> Unit
 ) {
     ModalDrawerSheet {
@@ -124,15 +131,22 @@ fun AppDrawerContent(
                 icon = { Icon(Icons.Default.Home, "Inicio") },
                 label = { Text("Inicio") },
                 selected = true,
-                onClick = { /* TODO */ },
-                modifier = Modifier.background(Color(0xFFF57C00))
+                onClick = { onItemClicked() } // <-- ACCIÓN CONECTADA
             )
             NavigationDrawerItem(
                 icon = { Icon(Icons.Default.Sync, "Sincronizar") },
                 label = { Text("Sincronizar") },
                 selected = false,
-                onClick = { /* TODO */ },
-                modifier = Modifier.background(Color(0xFFF57C00))
+                onClick = { onItemClicked() } // <-- ACCIÓN CONECTADA
+            )
+            NavigationDrawerItem(
+                icon = { Icon(Icons.Default.Add, "Agregar Equipo") }, // Asegúrate de importar Icons.Default.Add
+                label = { Text("Agregar Equipo") },
+                selected = false,
+                onClick = {
+                    onItemClicked()
+                    // TODO: Añadir la navegación a la nueva pantalla aquí
+                }
             )
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
             NavigationDrawerItem(
@@ -146,6 +160,7 @@ fun AppDrawerContent(
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
@@ -153,6 +168,7 @@ fun HomeScreenPreview() {
         AppDrawerContent(
             usuario = Usuario(1, "Juan Perez", "juan.perez@example.com", "123", 1),
             rol = Rol(1, "Técnico de Campo"),
+            onItemClicked = {}, // <-- PARÁMETRO AÑADIDO QUE FALTABA
             onLogoutClicked = {}
         )
     }

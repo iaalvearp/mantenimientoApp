@@ -9,8 +9,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,9 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,8 +28,8 @@ fun PreventiveChecklistScreen(
     equipoId: String,
     viewModel: ChecklistViewModel,
     onNavigateBack: () -> Unit,
-    title: String, // <-- AÑADE ESTA LÍNEA
-    checklistType: String // <-- AÑADE ESTA LÍNEA
+    title: String,
+    checklistType: String
 )  {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val showDialog by viewModel.showSaveConfirmation.collectAsStateWithLifecycle()
@@ -39,14 +38,14 @@ fun PreventiveChecklistScreen(
     var expandedItemId by remember { mutableStateOf<Int?>(null) }
 
     // Efecto para volver atrás cuando el diálogo se cierra
-    LaunchedEffect(key1 = Unit) {
-        viewModel.loadChecklistData("preventivo")
+    LaunchedEffect(key1 = checklistType) { // Parámetro 'checklistType' AHORA SÍ SE USA
+        viewModel.loadChecklistData(checklistType)
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(title) }, // <-- Usamos el título dinámico
+                title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
@@ -54,7 +53,6 @@ fun PreventiveChecklistScreen(
                 }
             )
         },
-        // Botón flotante para guardar
         floatingActionButton = {
             FloatingActionButton(onClick = { viewModel.saveChecklist(equipoId) }) {
                 Icon(Icons.Default.Save, contentDescription = "Guardar")
@@ -71,20 +69,37 @@ fun PreventiveChecklistScreen(
             items(uiState.items) { itemState ->
                 ChecklistItem(
                     itemState = itemState,
+                    // Le decimos al item si DEBE estar expandido
                     isExpanded = expandedItemId == itemState.actividad.actividad.id,
+                    // --- PUNTO CLAVE 2: La orden ---
+                    // Le damos al item la orden de qué hacer cuando se le dé clic
                     onExpand = {
                         expandedItemId = if (expandedItemId == itemState.actividad.actividad.id) {
-                            null // Si ya está expandido, lo cerramos
+                            null // Si ya está abierto, ciérralo
                         } else {
-                            itemState.actividad.actividad.id // Si no, lo expandimos
+                            itemState.actividad.actividad.id // Si está cerrado, ábrelo
                         }
                     },
                     onResponseSelected = { respuesta ->
-                        viewModel.onResponseSelected(itemState.actividad.actividad.id, respuesta)
+                        viewModel.onResponseSelected(
+                            actividadId = itemState.actividad.actividad.id,
+                            respuesta = respuesta
+                        )
                     },
                     onObservationChanged = { texto ->
                         viewModel.onObservationChanged(itemState.actividad.actividad.id, texto)
                     }
+                )
+            }
+
+            // Campo de Observaciones Generales
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = uiState.observacionGeneral,
+                    onValueChange = { viewModel.onGeneralObservationChanged(it) },
+                    label = { Text("OBSERVACIONES / RECOMENDACIONES") },
+                    modifier = Modifier.fillMaxWidth().height(150.dp)
                 )
             }
         }
@@ -99,7 +114,7 @@ fun PreventiveChecklistScreen(
                     TextButton(
                         onClick = {
                             viewModel.dismissSaveConfirmation()
-                            onNavigateBack() // Volvemos a la pantalla anterior
+                            onNavigateBack()
                         }
                     ) {
                         Text("Aceptar")
@@ -110,6 +125,8 @@ fun PreventiveChecklistScreen(
     }
 }
 
+// DENTRO DE PreventiveChecklistScreen.kt
+
 @Composable
 fun ChecklistItem(
     itemState: ChecklistItemState,
@@ -118,6 +135,8 @@ fun ChecklistItem(
     onResponseSelected: (PosibleRespuesta) -> Unit,
     onObservationChanged: (String) -> Unit
 ) {
+    val esSeleccionMultiple = itemState.actividad.actividad.tipoSeleccion == "multiple_choice"
+
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -126,7 +145,7 @@ fun ChecklistItem(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = rememberRipple(),
-                        onClick = { onExpand() }
+                        onClick = onExpand
                     ),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -142,6 +161,7 @@ fun ChecklistItem(
                 )
             }
 
+            // --- INICIO DEL CÓDIGO COMPLETO Y CORREGIDO ---
             AnimatedVisibility(visible = isExpanded) {
                 Column {
                     Spacer(modifier = Modifier.height(16.dp))
@@ -150,7 +170,8 @@ fun ChecklistItem(
                             Modifier
                                 .fillMaxWidth()
                                 .selectable(
-                                    selected = (itemState.respuestaSeleccionada?.id == respuesta.id),
+                                    selected = itemState.respuestasSeleccionadas.contains(respuesta),
+                                    // Esta es la corrección que faltaba para las opciones internas
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = rememberRipple(),
                                     onClick = { onResponseSelected(respuesta) }
@@ -158,21 +179,26 @@ fun ChecklistItem(
                                 .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            RadioButton(
-                                selected = (itemState.respuestaSeleccionada?.id == respuesta.id),
-                                onClick = { onResponseSelected(respuesta) }
-                            )
+                            if (esSeleccionMultiple) {
+                                Checkbox(
+                                    checked = itemState.respuestasSeleccionadas.contains(respuesta),
+                                    onCheckedChange = { onResponseSelected(respuesta) }
+                                )
+                            } else {
+                                RadioButton(
+                                    selected = itemState.respuestasSeleccionadas.contains(respuesta),
+                                    onClick = { onResponseSelected(respuesta) }
+                                )
+                            }
                             Text(text = respuesta.label, modifier = Modifier.padding(start = 8.dp))
                         }
                     }
 
-                    // --- LÓGICA DE OBSERVACIÓN CORREGIDA ---
-                    // El campo de texto solo aparece si la respuesta seleccionada
-                    // es "Regular", "Mal" o "Muy Mal".
-                    val respuestaSeleccionadaValue = itemState.respuestaSeleccionada?.value
-                    val mostrarCampoObservacion = respuestaSeleccionadaValue in listOf("regular", "mal", "muy_mal")
+                    // Lógica para la observación individual
+                    val respuestaValue = itemState.respuestasSeleccionadas.firstOrNull()?.value
+                    val mostrarObsIndividual = respuestaValue in listOf("regular", "mal", "muy_mal")
 
-                    if (mostrarCampoObservacion) {
+                    if (mostrarObsIndividual) {
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(
                             value = itemState.observacion,
@@ -183,6 +209,7 @@ fun ChecklistItem(
                     }
                 }
             }
+            // --- FIN DEL CÓDIGO COMPLETO ---
         }
     }
 }

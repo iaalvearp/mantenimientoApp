@@ -85,19 +85,25 @@ fun AppNavigation() {
             val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
             MaintenanceActivitiesScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onPreventiveClicked = {
-                    navController.navigate("preventiveChecklist/$equipoId")
-                },
-                // --- INICIO DE LA MODIFICACIÓN ---
-                onCorrectiveClicked = {
-                    // Le decimos que navegue a una nueva ruta para el checklist correctivo
-                    navController.navigate("correctiveChecklist/$equipoId")
-                },
-                // Volvemos a añadir onNextClicked, aunque por ahora no haga nada
-                onNextClicked = {
-                    // TODO: Aquí irá la lógica para navegar a la siguiente pantalla
-                    // después del checklist, por ejemplo, una pantalla de resumen.
-                }
+                onPreventiveClicked = {navController.navigate("preventiveChecklist/$equipoId") },
+                onCorrectiveClicked = { navController.navigate("correctiveChecklist/$equipoId") },
+                onDiagnosticoClicked = { navController.navigate("diagnosticoChecklist/$equipoId") }, // <-- Conectado aquí
+                onNextClicked = { /* TODO */ }
+            )
+        }
+
+        composable(
+            route = "diagnosticoChecklist/{equipoId}",
+            arguments = listOf(navArgument("equipoId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
+            val checklistViewModel: ChecklistViewModel = viewModel(factory = viewModelFactory)
+            PreventiveChecklistScreen(
+                equipoId = equipoId,
+                viewModel = checklistViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                title = "Diagnóstico",
+                checklistType = "diagnostico"
             )
         }
 

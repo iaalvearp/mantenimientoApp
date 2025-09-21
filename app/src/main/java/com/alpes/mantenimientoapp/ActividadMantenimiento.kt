@@ -8,5 +8,6 @@ import androidx.room.PrimaryKey
 data class ActividadMantenimiento(
     @PrimaryKey val id: Int,
     val nombre: String,
-    val tipo: String // "preventivo" o "correctivo"
+    val tipo: String,
+    val tipoSeleccion: String // <-- Asegúrate de que esta línea exista
 )
