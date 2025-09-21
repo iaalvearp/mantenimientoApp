@@ -1,31 +1,14 @@
 // Archivo: LoginScreen.kt
-
 package com.alpes.mantenimientoapp
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,56 +17,60 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.foundation.layout.size
-
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: (Int) -> Unit,
-    loginViewModel: LoginViewModel // <-- Quitamos el "= viewModel()"
+    loginViewModel: LoginViewModel
 ) {
     val uiState by loginViewModel.uiState.collectAsStateWithLifecycle()
 
-    // Este bloque se ejecutará cada vez que uiState.loginExitoso cambie a true
     LaunchedEffect(uiState.loginExitoso) {
         if (uiState.loginExitoso && uiState.userId != null) {
             onLoginSuccess(uiState.userId!!)
         }
     }
 
+    // --- INICIO DE LA NUEVA ESTRUCTURA VISUAL ---
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF33A8FF)), // Fondo azul
         contentAlignment = Alignment.Center
     ) {
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            modifier = Modifier.padding(24.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.logo),
+                    painter = painterResource(id = R.drawable.logo), // Asegúrate de tener tu logo en res/drawable
                     contentDescription = "Logo de la empresa",
-                    modifier = Modifier.height(80.dp).width(240.dp) // O .size(120.dp)
+                    modifier = Modifier.height(80.dp).width(240.dp) // Ajusta el tamaño según tu logo
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
-                HorizontalDivider(color = Color(0xFFF57C00))
-                Spacer(modifier = Modifier.height(32.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Text(text = "INICIAR SESIÓN", fontSize = 20.sp, style = MaterialTheme.typography.titleLarge)
+                Text(
+                    text = "INICIAR SESIÓN",
+                    style = MaterialTheme.typography.titleLarge
+                )
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 OutlinedTextField(
-                    value = uiState.email, // Leemos el valor del ViewModel
-                    onValueChange = { loginViewModel.onEmailChange(it) }, // Notificamos al ViewModel
+                    value = uiState.email,
+                    onValueChange = { loginViewModel.onEmailChange(it) },
                     label = { Text("Usuario") },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -91,59 +78,45 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
-                    value = uiState.contrasena, // Leemos el valor del ViewModel
-                    onValueChange = { loginViewModel.onContrasenaChange(it) }, // Notificamos al ViewModel
+                    value = uiState.contrasena,
+                    onValueChange = { loginViewModel.onContrasenaChange(it) },
                     label = { Text("Contraseña") },
                     modifier = Modifier.fillMaxWidth(),
                     visualTransformation = PasswordVisualTransformation(),
                     isError = uiState.error != null
                 )
 
-                // 1. "Tomamos la foto" del estado del error.
-                val errorActual = uiState.error
-
-                // 2. Comprobamos la foto.
-                if (errorActual != null) {
+                if (uiState.error != null) {
                     Text(
-                        text = errorActual, // 3. Usamos la foto, que es 100% segura.
+                        text = uiState.error!!,
                         color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp),
+                        textAlign = TextAlign.Center
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                TextButton(onClick = { loginViewModel.onLoginClicked() },) {
-                    Text(
-                        text = "Recuperar contraseña",
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        color = Color(0xFFF57C00)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
                     onClick = { loginViewModel.onLoginClicked() },
-                    // El botón solo se habilita si el token está listo Y no estamos cargando.
-                    enabled = uiState.isTokenReady && !uiState.isLoading,
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    enabled = !uiState.isLoading,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00)) // Color naranja
                 ) {
                     if (uiState.isLoading) {
-                        // Muestra una rueda de carga si estamos validando
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
                             color = Color.White
                         )
                     } else {
-                        // Muestra el texto normal si no estamos cargando
                         Text(text = "Ingresar", fontSize = 18.sp, color = Color.White)
                     }
                 }
             }
         }
     }
+    // --- FIN DE LA NUEVA ESTRUCTURA VISUAL ---
 }

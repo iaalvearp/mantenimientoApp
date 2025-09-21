@@ -232,6 +232,8 @@ private fun DateField(selectedDateMillis: Long, onClick: () -> Unit) {
 }
 
 // --- VISTA PREVIA Y CLASES FALSAS (MOCKS) ---
+// DENTRO DE TaskDetailScreen.kt
+
 private class FakeAppDao : AppDao {
     override suspend fun insertarUsuario(usuario: Usuario) {}
     override suspend fun insertarTarea(tarea: Tarea) {}
@@ -246,9 +248,11 @@ private class FakeAppDao : AppDao {
     override suspend fun insertarUnidadNegocio(unidadNegocio: UnidadNegocio) {}
     override suspend fun insertarAgencia(agencia: Agencia) {}
     override suspend fun insertarCiudad(ciudad: Ciudad) {}
-
-    // --- ESTA ES LA LÍNEA QUE FALTABA ---
     override suspend fun insertarResultado(resultado: MantenimientoResultado) {}
+
+    // --- MÉTODOS AÑADIDOS QUE FALTABAN ---
+    override suspend fun insertarFinalizacion(finalizacion: MantenimientoFinal) {}
+    override suspend fun updateEquipoStatus(equipoId: String, newStatusId: Int) {}
     // --- FIN DE LA CORRECCIÓN ---
 
     override suspend fun obtenerCiudadesPorProvincia(idDeLaProvincia: Int): List<Ciudad> = emptyList()

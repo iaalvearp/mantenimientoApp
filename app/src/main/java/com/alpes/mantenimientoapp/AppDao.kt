@@ -47,6 +47,9 @@ interface AppDao {
     @Insert
     suspend fun insertarResultado(resultado: MantenimientoResultado)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarFinalizacion(finalizacion: MantenimientoFinal)
+
     @Query("SELECT * FROM equipos WHERE tareaId = :idDeLaTarea")
     suspend fun obtenerEquiposPorTarea(idDeLaTarea: Int): List<Equipo>
 
@@ -104,4 +107,7 @@ interface AppDao {
 
     @Query("SELECT * FROM unidades_negocio WHERE id = :unidadNegocioId LIMIT 1")
     suspend fun obtenerUnidadNegocioPorId(unidadNegocioId: Int): UnidadNegocio?
+
+    @Query("UPDATE equipos SET estadoId = :newStatusId WHERE id = :equipoId")
+    suspend fun updateEquipoStatus(equipoId: String, newStatusId: Int)
 }

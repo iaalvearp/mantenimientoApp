@@ -213,3 +213,56 @@ fun ChecklistItem(
         }
     }
 }
+
+@Composable
+private fun ChecklistItemContent(
+    itemState: ChecklistItemState,
+    onResponseSelected: (PosibleRespuesta) -> Unit,
+    onObservationChanged: (String) -> Unit
+) {
+    val esSeleccionMultiple = itemState.actividad.actividad.tipoSeleccion == "multiple_choice"
+
+    Column {
+        Spacer(modifier = Modifier.height(16.dp))
+        itemState.actividad.posiblesRespuestas.forEach { respuesta ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .selectable(
+                        selected = itemState.respuestasSeleccionadas.contains(respuesta),
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple(),
+                        onClick = { onResponseSelected(respuesta) }
+                    )
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (esSeleccionMultiple) {
+                    Checkbox(
+                        checked = itemState.respuestasSeleccionadas.contains(respuesta),
+                        onCheckedChange = { onResponseSelected(respuesta) }
+                    )
+                } else {
+                    RadioButton(
+                        selected = itemState.respuestasSeleccionadas.contains(respuesta),
+                        onClick = { onResponseSelected(respuesta) }
+                    )
+                }
+                Text(text = respuesta.label, modifier = Modifier.padding(start = 8.dp))
+            }
+        }
+
+        val respuestaValue = itemState.respuestasSeleccionadas.firstOrNull()?.value
+        val mostrarObsIndividual = respuestaValue in listOf("regular", "mal", "muy_mal")
+
+        if (mostrarObsIndividual) {
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = itemState.observacion,
+                onValueChange = onObservationChanged,
+                label = { Text("Añadir observación...") },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}

@@ -18,6 +18,9 @@ class ViewModelFactory(private val dao: AppDao) : ViewModelProvider.Factory {
             modelClass.isAssignableFrom(ChecklistViewModel::class.java) -> {
                 ChecklistViewModel(dao) as T
             }
+            modelClass.isAssignableFrom(FinalizacionViewModel::class.java) -> {
+                FinalizacionViewModel(dao) as T
+            }
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }

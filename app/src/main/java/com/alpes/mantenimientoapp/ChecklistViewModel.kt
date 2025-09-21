@@ -88,6 +88,7 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                         observacion = itemState.observacion
                     )
                     dao.insertarResultado(resultado)
+                    dao.updateEquipoStatus(equipoId = equipoId, newStatusId = 2)
                 }
             }
             // Guardar observación general

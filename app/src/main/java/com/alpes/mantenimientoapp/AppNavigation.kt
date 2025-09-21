@@ -88,7 +88,7 @@ fun AppNavigation() {
                 onPreventiveClicked = {navController.navigate("preventiveChecklist/$equipoId") },
                 onCorrectiveClicked = { navController.navigate("correctiveChecklist/$equipoId") },
                 onDiagnosticoClicked = { navController.navigate("diagnosticoChecklist/$equipoId") }, // <-- Conectado aquí
-                onNextClicked = { /* TODO */ }
+                onNextClicked = { navController.navigate("finalizacion/$equipoId") }
             )
         }
 
@@ -139,6 +139,27 @@ fun AppNavigation() {
                 // La única diferencia es el título que le pasaremos
                 title = "Checklist Correctivo",
                 checklistType = "correctivo" // Y el tipo de checklist a cargar
+            )
+        }
+
+        // --- AÑADE ESTA NUEVA RUTA ---
+        composable(
+            route = "finalizacion/{equipoId}",
+            arguments = listOf(navArgument("equipoId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
+            val viewModel: FinalizacionViewModel = viewModel(factory = viewModelFactory)
+
+            FinalizacionScreen(
+                equipoId = equipoId,
+                viewModel = viewModel,
+                // ¡CAMBIO AQUÍ! La lambda ahora recibe el userId.
+                onNavigateBackToHome = { userId ->
+                    // Navega al inicio del usuario correcto y limpia el historial.
+                    navController.navigate("home/$userId") {
+                        popUpTo("home/$userId") { inclusive = true }
+                    }
+                }
             )
         }
     }
