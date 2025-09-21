@@ -68,46 +68,18 @@ fun HomeScreen(
                 )
             }
         ) { innerPadding ->
+            // --- INICIO DE LA ACTUALIZACIÓN ---
             LazyColumn(
-                modifier = Modifier.padding(innerPadding),
-                contentPadding = PaddingValues(vertical = 8.dp)
+                modifier = Modifier.padding(innerPadding)
             ) {
                 items(uiState.equipos) { equipo ->
+                    // Usamos nuestro nuevo y mejorado Composable, pasándole la acción de clic
                     EquipmentListItem(
                         equipo = equipo,
                         onClick = { onEquipoClicked(equipo.id) }
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun EquipmentListItem(equipo: Equipo, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            // --- CORRECCIÓN FINAL Y DEFINITIVA ---
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null, // <- La clave para evitar el cierre
-                onClick = onClick
-            ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Default.Router, contentDescription = "Equipo", modifier = Modifier.size(40.dp))
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(equipo.nombre, fontWeight = FontWeight.Bold)
-                Text("S/N: ${equipo.id}", style = MaterialTheme.typography.bodySmall)
-            }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Ver detalle")
         }
     }
 }
@@ -120,12 +92,12 @@ fun AppDrawerContent(
 ) {
     ModalDrawerSheet {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().fillMaxHeight()
+                .background(Color(0xFFF57C00)),
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFF57C00))
                     .padding(vertical = 24.dp, horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -152,19 +124,22 @@ fun AppDrawerContent(
                 icon = { Icon(Icons.Default.Home, "Inicio") },
                 label = { Text("Inicio") },
                 selected = true,
-                onClick = { /* TODO */ }
+                onClick = { /* TODO */ },
+                modifier = Modifier.background(Color(0xFFF57C00))
             )
             NavigationDrawerItem(
                 icon = { Icon(Icons.Default.Sync, "Sincronizar") },
                 label = { Text("Sincronizar") },
                 selected = false,
-                onClick = { /* TODO */ }
+                onClick = { /* TODO */ },
+                modifier = Modifier.background(Color(0xFFF57C00))
             )
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
             NavigationDrawerItem(
                 icon = { Icon(Icons.AutoMirrored.Filled.Logout, "Cerrar Sesión") },
                 label = { Text("Cerrar Sesión") },
                 selected = false,
+                modifier = Modifier.background(Color(0xFFF57C00)),
                 onClick = onLogoutClicked
             )
         }

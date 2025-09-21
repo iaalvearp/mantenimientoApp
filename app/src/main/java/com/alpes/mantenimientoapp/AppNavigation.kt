@@ -88,7 +88,11 @@ fun AppNavigation() {
                 onPreventiveClicked = {
                     navController.navigate("preventiveChecklist/$equipoId")
                 },
-                onCorrectiveClicked = { /* TODO */ },
+                // --- INICIO DE LA MODIFICACIÓN ---
+                onCorrectiveClicked = {
+                    // Le decimos que navegue a una nueva ruta para el checklist correctivo
+                    navController.navigate("correctiveChecklist/$equipoId")
+                },
                 // Volvemos a añadir onNextClicked, aunque por ahora no haga nada
                 onNextClicked = {
                     // TODO: Aquí irá la lógica para navegar a la siguiente pantalla
@@ -105,9 +109,30 @@ fun AppNavigation() {
             val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
             val checklistViewModel: ChecklistViewModel = viewModel(factory = viewModelFactory)
             PreventiveChecklistScreen(
-                equipoId = equipoId, // <-- Pasamos el ID
+                equipoId = equipoId,
                 viewModel = checklistViewModel,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                // --- LÍNEAS AÑADIDAS ---
+                title = "Checklist Preventivo",
+                checklistType = "preventivo"
+            )
+        }
+
+        composable(
+            route = "correctiveChecklist/{equipoId}",
+            arguments = listOf(navArgument("equipoId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
+            val checklistViewModel: ChecklistViewModel = viewModel(factory = viewModelFactory)
+
+            // ¡Reutilizamos la misma pantalla!
+            PreventiveChecklistScreen(
+                equipoId = equipoId,
+                viewModel = checklistViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                // La única diferencia es el título que le pasaremos
+                title = "Checklist Correctivo",
+                checklistType = "correctivo" // Y el tipo de checklist a cargar
             )
         }
     }

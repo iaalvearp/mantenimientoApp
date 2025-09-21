@@ -6,7 +6,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,23 +29,51 @@ import java.io.InputStreamReader
 class MainActivity : ComponentActivity() {
 
     private var isLoading by mutableStateOf(true)
+    // --- INICIO DE LA "CAJA NEGRA" ---
+    // Variable para guardar el mensaje de error si algo falla.
+    private var startupError by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         lifecycleScope.launch(Dispatchers.IO) {
-            prepopulateDatabaseIfNeeded()
-            runOnUiThread {
-                isLoading = false
+            // --- INICIO DE LA "CAJA NEGRA" ---
+            try {
+                // Intentamos preparar la base de datos como siempre.
+                prepopulateDatabaseIfNeeded()
+            } catch (e: Exception) {
+                // Si algo falla, guardamos el mensaje de error para mostrarlo en la UI.
+                // e.printStackTrace() es útil para ver el error completo si tuvieras Logcat.
+                e.printStackTrace()
+                startupError = "Error al iniciar la app:\n\n${e.message}"
+            } finally {
+                // Ocurra un error o no, dejamos de mostrar la pantalla de carga.
+                runOnUiThread {
+                    isLoading = false
+                }
             }
+            // --- FIN DE LA "CAJA NEGRA" ---
         }
 
         setContent {
             MantenimientoAppTheme {
-                if (isLoading) {
-                    LoadingScreen()
-                } else {
-                    AppNavigation()
+                // --- LÓGICA DE LA UI ACTUALIZADA ---
+                when {
+                    // Si hay un error, lo mostramos primero que nada.
+                    startupError != null -> {
+                        ErrorDialog(errorMessage = startupError!!) {
+                            // Cerramos la app al presionar OK, ya que no puede continuar.
+                            finish()
+                        }
+                    }
+                    // Si no hay error y está cargando, mostramos el Círculo de Carga.
+                    isLoading -> {
+                        LoadingScreen()
+                    }
+                    // Si no hay error y no está cargando, mostramos la app.
+                    else -> {
+                        AppNavigation()
+                    }
                 }
             }
         }
@@ -230,4 +261,18 @@ fun LoadingScreen() {
     ) {
         CircularProgressIndicator(color = Color.White)
     }
+}
+
+@Composable
+fun ErrorDialog(errorMessage: String, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Ocurrió un Problema") },
+        text = { Text(errorMessage) },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Aceptar")
+            }
+        }
+    )
 }

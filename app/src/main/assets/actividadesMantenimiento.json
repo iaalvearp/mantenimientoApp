@@ -95,6 +95,9 @@
         { "id": 5, "label": "Mal", "value": "mal" },
         { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
       ]
+    },
+    {
+      "recomendaciones": ""
     }
   ],
 
@@ -194,6 +197,9 @@
         { "id": 5, "label": "Mal", "value": "mal" },
         { "id": 6, "label": "Muy Mal", "value": "muy_mal" }
       ]
+    },
+    {
+      "recomendaciones": ""
     }
   ]
 }

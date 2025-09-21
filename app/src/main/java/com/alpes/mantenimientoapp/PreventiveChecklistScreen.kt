@@ -26,10 +26,12 @@ import kotlinx.coroutines.flow.collectLatest
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PreventiveChecklistScreen(
-    equipoId: String, // <-- Recibimos el ID del equipo
+    equipoId: String,
     viewModel: ChecklistViewModel,
-    onNavigateBack: () -> Unit
-) {
+    onNavigateBack: () -> Unit,
+    title: String, // <-- AÑADE ESTA LÍNEA
+    checklistType: String // <-- AÑADE ESTA LÍNEA
+)  {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val showDialog by viewModel.showSaveConfirmation.collectAsStateWithLifecycle()
 
@@ -44,8 +46,7 @@ fun PreventiveChecklistScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Checklist Preventivo") },
-                // Flecha para volver atrás
+                title = { Text(title) }, // <-- Usamos el título dinámico
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
