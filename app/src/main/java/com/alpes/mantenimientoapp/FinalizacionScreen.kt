@@ -1,23 +1,39 @@
 // Archivo: FinalizacionScreen.kt
 package com.alpes.mantenimientoapp
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import kotlin.OptIn // <-- Y esta también
+import coil.compose.AsyncImage
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,105 +42,197 @@ fun FinalizacionScreen(
     numeroSerie: String,
     viewModel: FinalizacionViewModel,
     onNavigateBackToHome: (Int) -> Unit,
-    onBackClicked: () -> Unit // Este parámetro ahora lo usaremos
+    onBackClicked: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var currentPhotoType by remember { mutableStateOf("") }
+    var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Se ejecuta una sola vez para cargar los datos
-    LaunchedEffect(key1 = equipoId) {
-        viewModel.loadData(equipoId)
-    }
-
-    // Observa si la finalización fue exitosa para navegar
-    LaunchedEffect(key1 = uiState.finalizacionExitosa) {
-        if (uiState.finalizacionExitosa) {
-            // ¡CAMBIO AQUÍ! Le pasamos el userId que obtuvimos del estado.
-            onNavigateBackToHome(uiState.userId)
+    // Launcher para la CÁMARA
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success) {
+                tempPhotoUri?.let { viewModel.addPhotoUri(it, currentPhotoType) }
+            }
         }
+    )
+
+    // Launcher para la GALERÍA
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetMultipleContents(), // Permite seleccionar varias fotos
+        onResult = { uris ->
+            uris.forEach { uri ->
+                viewModel.addPhotoUri(uri, currentPhotoType)
+            }
+        }
+    )
+
+    // Launcher para PERMISOS
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                val uri = createTempUri(context)
+                tempPhotoUri = uri
+                cameraLauncher.launch(uri)
+            }
+            // Aquí puedes mostrar un mensaje si el permiso es denegado
+        }
+    )
+
+    LaunchedEffect(key1 = equipoId) { viewModel.loadData(equipoId) }
+    LaunchedEffect(key1 = uiState.finalizacionExitosa) {
+        if (uiState.finalizacionExitosa) { onNavigateBackToHome(uiState.userId) }
     }
 
     Scaffold(
         topBar = {
-            // AJUSTE 1: Añadimos la barra superior
             TopAppBar(
                 title = { Text("Finalización de Mantenimiento") },
-                // AJUSTE 2: Añadimos el icono de navegación (la flecha)
                 navigationIcon = {
-                    IconButton(onClick = onBackClicked) { // Conectamos la acción de volver
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack, // Asegúrate de importar el icono
-                            contentDescription = "Volver"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White, // Fondo blanco para la barra
-                    titleContentColor = Color.Black // Texto negro
-                )
-            )
-        },
-        containerColor = Color(0xFF33A8FF) // Mantenemos el fondo azul general de la pantalla
-    ) { paddingValues -> // El Scaffold nos da un padding para respetar la TopAppBar
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues), // AJUSTE 3: Aplicamos el padding aquí
-            contentAlignment = Alignment.Center
-        ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(12.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    // El Text del título ya no es necesario aquí, porque está en la TopAppBar
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    InfoRow(label = "Técnico Responsable:", value = uiState.tecnico?.nombre ?: "Cargando...")
-                    InfoRow(label = "Cliente:", value = uiState.cliente?.nombreCompleto ?: "Cargando...")
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Usamos el estilo de InfoRow para el campo del delegado
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text("Delegado:", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
-                        OutlinedTextField(
-                            value = uiState.responsableCliente,
-                            onValueChange = { viewModel.onResponsableChanged(it) },
-                            label = { Text("Nombre del Responsable del Cliente") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.weight(1f)) // Empuja el botón hacia abajo
-
-                    Button(
-                        onClick = { viewModel.saveAndFinalize(equipoId, numeroSerie) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        enabled = uiState.responsableCliente.isNotBlank(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (uiState.responsableCliente.isNotBlank()) Color(0xFFF57C00) else MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = if (uiState.responsableCliente.isNotBlank()) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    ) {
-                        Text("FINALIZAR")
+                    IconButton(onClick = onBackClicked) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            InfoRow(label = "Técnico Responsable:", value = uiState.tecnico?.nombre ?: "Cargando...")
+            InfoRow(label = "Cliente:", value = uiState.cliente?.nombreCompleto ?: "Cargando...")
+
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text("Delegado:", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                OutlinedTextField(
+                    value = uiState.responsableCliente,
+                    onValueChange = { viewModel.onResponsableChanged(it) },
+                    label = { Text("Nombre del Responsable del Cliente") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // --- SECCIÓN DE FOTOS PREVENTIVO ---
+            PhotoAttachmentSection(
+                label = "Fotos Preventivo",
+                photoUris = uiState.fotosPreventivas,
+                onAddFromCamera = {
+                    currentPhotoType = "preventivo"
+                    when (PackageManager.PERMISSION_GRANTED) {
+                        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) -> {
+                            val uri = createTempUri(context)
+                            tempPhotoUri = uri
+                            cameraLauncher.launch(uri)
+                        }
+                        else -> permissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                },
+                onAddFromGallery = {
+                    currentPhotoType = "preventivo"
+                    galleryLauncher.launch("image/*")
+                }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- SECCIÓN DE FOTOS CORRECTIVO ---
+            PhotoAttachmentSection(
+                label = "Fotos Correctivo",
+                photoUris = uiState.fotosCorrectivas,
+                onAddFromCamera = {
+                    currentPhotoType = "correctivo"
+                    when (PackageManager.PERMISSION_GRANTED) {
+                        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) -> {
+                            val uri = createTempUri(context)
+                            tempPhotoUri = uri
+                            cameraLauncher.launch(uri)
+                        }
+                        else -> permissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                },
+                onAddFromGallery = {
+                    currentPhotoType = "correctivo"
+                    galleryLauncher.launch("image/*")
+                }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Spacer(modifier = Modifier.weight(1f)) // Empuja el botón hacia abajo
+
+            Button(
+                onClick = { viewModel.saveAndFinalize(equipoId, numeroSerie) },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                enabled = uiState.responsableCliente.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (uiState.responsableCliente.isNotBlank()) Color(0xFFF57C00) else MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) { Text("FINALIZAR") }
+        }
+    }
+}
+
+// --- NUEVO COMPOSABLE PARA LA SECCIÓN DE FOTOS ---
+@Composable
+private fun PhotoAttachmentSection(
+    label: String,
+    photoUris: List<Uri>,
+    onAddFromCamera: () -> Unit,
+    onAddFromGallery: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            photoUris.forEach { uri ->
+                AsyncImage(
+                    model = uri,
+                    contentDescription = "Foto adjunta",
+                    modifier = Modifier.size(100.dp).clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            }
+            // Botones para añadir más fotos
+            Column {
+                Button(onClick = onAddFromCamera) {
+                    Icon(Icons.Default.AddAPhoto, contentDescription = "Tomar foto")
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Cámara")
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Button(onClick = onAddFromGallery) {
+                    Icon(Icons.Default.AddAPhoto, contentDescription = "Adjuntar de galería")
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Galería")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
 }
+
+private fun createTempUri(context: Context): Uri {
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+    val file = File(context.cacheDir, "JPEG_${timeStamp}_.jpg")
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        file
+    )
+}
+
+// ... (El Composable InfoRow se mantiene igual)
 
 @Composable
 private fun InfoRow(label: String, value: String) {

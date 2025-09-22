@@ -1,10 +1,6 @@
-// Archivo: FinalizacionViewModel.kt
 package com.alpes.mantenimientoapp
 
 import android.app.Application
-import android.content.ContentResolver
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,25 +17,24 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// Estado de la UI para esta pantalla
 data class FinalizacionUiState(
     val tecnico: Usuario? = null,
     val cliente: Cliente? = null,
     val responsableCliente: String = "",
     val finalizacionExitosa: Boolean = false,
     val userId: Int = 0,
-    val fotosPreventivas: List<Uri> = emptyList(), // Uris de las fotos seleccionadas/tomadas
-    val fotosCorrectivas: List<Uri> = emptyList() // Uris de las fotos seleccionadas/tomadas
+    // --- NUEVO: Listas para las URIs de las fotos ---
+    val fotosPreventivas: List<Uri> = emptyList(),
+    val fotosCorrectivas: List<Uri> = emptyList()
 )
 
-// Cambiamos a AndroidViewModel para tener acceso al Context para guardar archivos
+// Usamos AndroidViewModel para tener acceso al Contexto de la aplicación
 class FinalizacionViewModel(private val dao: AppDao, application: Application) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(FinalizacionUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val applicationContext = application.applicationContext
-
+    // Carga los datos iniciales (igual que antes)
     fun loadData(equipoId: String) {
         viewModelScope.launch {
             val equipo = dao.obtenerEquipoPorId(equipoId)
@@ -48,19 +43,11 @@ class FinalizacionViewModel(private val dao: AppDao, application: Application) :
             if (tarea != null) {
                 val tecnico = dao.obtenerUsuarioPorId(tarea.usuarioId)
                 val cliente = dao.obtenerClientePorId(tarea.clienteId)
-
-                // Cargar fotos existentes si las hubiera (para mostrar si el usuario vuelve)
-                val fotosPrev = dao.obtenerFotosPorEquipoYTipo(equipoId, "preventivo").map { Uri.parse(it.rutaArchivo) }
-                val fotosCorr = dao.obtenerFotosPorEquipoYTipo(equipoId, "correctivo").map { Uri.parse(it.rutaArchivo) }
-
-
                 _uiState.update {
                     it.copy(
                         tecnico = tecnico,
                         cliente = cliente,
-                        userId = tecnico?.id ?: 0,
-                        fotosPreventivas = fotosPrev,
-                        fotosCorrectivas = fotosCorr
+                        userId = tecnico?.id ?: 0
                     )
                 }
             }
@@ -71,7 +58,8 @@ class FinalizacionViewModel(private val dao: AppDao, application: Application) :
         _uiState.update { it.copy(responsableCliente = nombre) }
     }
 
-    fun addPhoto(uri: Uri, tipoFoto: String) {
+    // --- NUEVO: Función para añadir una foto a la lista correspondiente ---
+    fun addPhotoUri(uri: Uri, tipoFoto: String) {
         _uiState.update { currentState ->
             when (tipoFoto) {
                 "preventivo" -> currentState.copy(fotosPreventivas = currentState.fotosPreventivas + uri)
@@ -92,55 +80,51 @@ class FinalizacionViewModel(private val dao: AppDao, application: Application) :
                 )
                 dao.insertarFinalizacion(finalizacion)
 
-                // Guardar las fotos en el almacenamiento interno y sus rutas en la BD
-                savePhotosToStorage(equipoId, numeroSerie, "preventivo", currentState.fotosPreventivas)
-                savePhotosToStorage(equipoId, numeroSerie, "correctivo", currentState.fotosCorrectivas)
+                // --- NUEVO: Lógica para guardar las fotos ---
+                savePhotosToStorage("preventivo", equipoId, numeroSerie, currentState.fotosPreventivas)
+                savePhotosToStorage("correctivo", equipoId, numeroSerie, currentState.fotosCorrectivas)
 
                 dao.updateEquipoStatus(equipoId = equipoId, newStatusId = 3)
-
                 _uiState.update { it.copy(finalizacionExitosa = true) }
             }
         }
     }
 
+    // --- NUEVO: Función privada para manejar el guardado de archivos ---
     private suspend fun savePhotosToStorage(
+        tipoFoto: String,
         equipoId: String,
         numeroSerie: String,
-        tipoFoto: String,
-        photoUris: List<Uri>
+        uris: List<Uri>
     ) = withContext(Dispatchers.IO) {
-        val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
-        val timestamp = dateFormat.format(Date())
+        val appContext = getApplication<Application>().applicationContext
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val folderName = "${numeroSerie}_${timeStamp}"
 
-        val appMediaDir = File(applicationContext.getExternalFilesDir(null), "MantenimientoAppMedia")
-        val tipoFotoDir = File(appMediaDir, tipoFoto)
-        val equipoDir = File(tipoFotoDir, "${numeroSerie}-${timestamp}") // Carpeta [numero de serie]-[fecha]
-
-        if (!equipoDir.exists()) {
-            equipoDir.mkdirs() // Crea todas las carpetas necesarias
+        val mainDirectory = File(appContext.getExternalFilesDir(null), "MantenimientoAppMedia")
+        val typeDirectory = File(mainDirectory, tipoFoto)
+        val sessionDirectory = File(typeDirectory, folderName)
+        if (!sessionDirectory.exists()) {
+            sessionDirectory.mkdirs()
         }
 
-        photoUris.forEachIndexed { index, uri ->
+        uris.forEachIndexed { index, uri ->
             try {
-                val originalInputStream = applicationContext.contentResolver.openInputStream(uri)
-                originalInputStream?.use { input ->
-                    val fileName = "${tipoFoto}_${index + 1}.jpg" // Nombra las fotos: preventivo_1.jpg, correctivo_1.jpg
-                    val destinationFile = File(equipoDir, fileName)
-                    FileOutputStream(destinationFile).use { output ->
-                        input.copyTo(output)
+                appContext.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    val file = File(sessionDirectory, "img_${index + 1}.jpg")
+                    FileOutputStream(file).use { outputStream ->
+                        inputStream.copyTo(outputStream)
                     }
-
-                    // Guardar la ruta en la base de datos
-                    val mantenimientoFoto = MantenimientoFoto(
+                    // Guardamos la ruta en la base de datos
+                    val foto = MantenimientoFoto(
                         equipoId = equipoId,
                         tipoFoto = tipoFoto,
-                        rutaArchivo = destinationFile.absolutePath // Guardamos la ruta absoluta
+                        rutaArchivo = file.absolutePath
                     )
-                    dao.insertarMantenimientoFoto(mantenimientoFoto)
+                    dao.insertarMantenimientoFoto(foto)
                 }
             } catch (e: IOException) {
-                e.printStackTrace()
-                // Manejar el error de guardado de la foto
+                e.printStackTrace() // Manejo de errores
             }
         }
     }
