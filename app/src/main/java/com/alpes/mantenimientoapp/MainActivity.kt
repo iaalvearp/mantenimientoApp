@@ -204,10 +204,11 @@ class MainActivity : ComponentActivity() {
         val nombre: String,
         val modelo: String,
         val caracteristicas: String,
-        val estadoId: Int
+        val estadoId: Int // Mantenemos este campo para que el JSON se lea sin errores
     ) {
-        // CORRECCIÓN: La función ahora coincide con la nueva estructura de la clase Equipo
-        fun toEquipo(tareaId: Int): Equipo = Equipo(id, nombre, modelo, caracteristicas, estadoId, tareaId, syncPending = false)
+        // --- ¡LA MAGIA ESTÁ AQUÍ! ---
+        // Ignoramos el 'estadoId' del JSON y siempre usamos '1' (Pendiente).
+        fun toEquipo(tareaId: Int): Equipo = Equipo(id, nombre, modelo, caracteristicas, 1, tareaId, syncPending = false)
     }
 
     private data class DatabaseJsonData(

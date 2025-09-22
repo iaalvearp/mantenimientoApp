@@ -50,6 +50,9 @@ interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarFinalizacion(finalizacion: MantenimientoFinal)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertarMantenimientoFoto(foto: MantenimientoFoto)
+
     @Query("SELECT * FROM equipos WHERE tareaId = :idDeLaTarea")
     suspend fun obtenerEquiposPorTarea(idDeLaTarea: Int): List<Equipo>
 
@@ -110,4 +113,7 @@ interface AppDao {
 
     @Query("UPDATE equipos SET estadoId = :newStatusId WHERE id = :equipoId")
     suspend fun updateEquipoStatus(equipoId: String, newStatusId: Int)
+
+    @Query("SELECT * FROM mantenimiento_fotos WHERE equipoId = :equipoId AND tipoFoto = :tipoFoto")
+    suspend fun obtenerFotosPorEquipoYTipo(equipoId: String, tipoFoto: String): List<MantenimientoFoto>
 }

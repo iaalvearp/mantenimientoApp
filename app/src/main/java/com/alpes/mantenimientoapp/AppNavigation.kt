@@ -1,6 +1,7 @@
 // Archivo: AppNavigation.kt
 package com.alpes.mantenimientoapp
 
+import android.app.Application
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -14,13 +15,14 @@ import androidx.navigation.navArgument
 fun AppNavigation() {
     val navController = rememberNavController()
 
-    // --- CORRECCIÓN ---
-    // 1. Obtenemos el contexto actual para poder acceder a la base de datos.
+    // --- INICIO DE LA CORRECCIÓN 1: Pasar 'application' a la Factory ---
     val context = LocalContext.current
-    // 2. Creamos la "fábrica" que sabe cómo construir nuestro LoginViewModel.
     val dao = AppDatabase.getDatabase(context).appDao()
-    val viewModelFactory = ViewModelFactory(dao)
-    // --- FIN DE LA CORRECCIÓN ---
+    // Obtenemos la instancia de Application desde el contexto
+    val application = context.applicationContext as Application
+    // Y se la pasamos a la fábrica al crearla
+    val viewModelFactory = ViewModelFactory(dao, application)
+    // --- FIN DE LA CORRECCIÓN 1 ---
 
 
     NavHost(navController = navController, startDestination = "login") {
@@ -53,42 +55,58 @@ fun AppNavigation() {
                 onLogout = {
                     navController.navigate("login") { popUpTo(0) }
                 },
-                onEquipoClicked = { equipoId ->
-                    // Cuando se hace clic en un equipo, navegamos a la pantalla de detalle
-                    navController.navigate("taskDetail/$equipoId")
+                onEquipoClicked = { equipoId, numeroSerie -> // Ahora pasamos ambos datos
+                    // Navegamos a la pantalla de detalle
+                    navController.navigate("taskDetail/$equipoId/$numeroSerie")
                 }
             )
         }
 
         composable(
-            route = "taskDetail/{equipoId}",
-            arguments = listOf(navArgument("equipoId") { type = NavType.StringType })
+            route = "taskDetail/{equipoId}/{numeroSerie}", // <-- RUTA ACTUALIZADA
+            arguments = listOf(
+                navArgument("equipoId") { type = NavType.StringType },
+                navArgument("numeroSerie") { type = NavType.StringType } // <-- ARGUMENTO AÑADIDO
+            )
         ) { backStackEntry ->
             val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
+            val numeroSerie = backStackEntry.arguments?.getString("numeroSerie") ?: "" // <-- OBTENEMOS EL VALOR
             val taskDetailViewModel: TaskDetailViewModel = viewModel(factory = viewModelFactory)
+
 
             TaskDetailScreen(
                 equipoId = equipoId,
                 viewModel = taskDetailViewModel,
                 onNavigateBack = { navController.popBackStack() },
-                // Le decimos qué hacer cuando se presione "SIGUIENTE"
                 onNextClicked = {
-                    navController.navigate("maintenanceActivities/$equipoId")
+                    // Aquí es donde va la navegación.
+                    // Le decimos que vaya a la siguiente pantalla pasando ambos datos.
+                    navController.navigate("maintenanceActivities/$equipoId/$numeroSerie")
                 }
             )
         }
 
         composable(
-            route = "maintenanceActivities/{equipoId}",
-            arguments = listOf(navArgument("equipoId") { type = NavType.StringType })
+            route = "maintenanceActivities/{equipoId}/{numeroSerie}", // <-- RUTA ACTUALIZADA
+            arguments = listOf(
+                navArgument("equipoId") { type = NavType.StringType },
+                navArgument("numeroSerie") { type = NavType.StringType } // <-- ARGUMENTO AÑADIDO
+            )
         ) { backStackEntry ->
             val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
+            val numeroSerie = backStackEntry.arguments?.getString("numeroSerie") ?: "" // <-- OBTENEMOS EL VALOR
+
             MaintenanceActivitiesScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onPreventiveClicked = {navController.navigate("preventiveChecklist/$equipoId") },
+                onPreventiveClicked = { navController.navigate("preventiveChecklist/$equipoId") },
                 onCorrectiveClicked = { navController.navigate("correctiveChecklist/$equipoId") },
-                onDiagnosticoClicked = { navController.navigate("diagnosticoChecklist/$equipoId") }, // <-- Conectado aquí
-                onNextClicked = { navController.navigate("finalizacion/$equipoId") }
+                onDiagnosticoClicked = { navController.navigate("diagnosticoChecklist/$equipoId") },
+                onNextClicked = { eqId, numSerie ->
+                    // Navegamos a la pantalla de finalización pasando los datos
+                    navController.navigate("finalizacion/$eqId/$numSerie")
+                },
+                equipoId = equipoId, // <-- PASAMOS EL VALOR
+                numeroSerie = numeroSerie // <-- PASAMOS EL VALOR
             )
         }
 
@@ -144,22 +162,26 @@ fun AppNavigation() {
 
         // --- AÑADE ESTA NUEVA RUTA ---
         composable(
-            route = "finalizacion/{equipoId}",
-            arguments = listOf(navArgument("equipoId") { type = NavType.StringType })
+            route = "finalizacion/{equipoId}/{numeroSerie}", // <-- RUTA ACTUALIZADA
+            arguments = listOf(
+                navArgument("equipoId") { type = NavType.StringType },
+                navArgument("numeroSerie") { type = NavType.StringType } // <-- ARGUMENTO AÑADIDO
+            )
         ) { backStackEntry ->
             val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
+            val numeroSerie = backStackEntry.arguments?.getString("numeroSerie") ?: "" // <-- OBTENEMOS EL VALOR
             val viewModel: FinalizacionViewModel = viewModel(factory = viewModelFactory)
 
             FinalizacionScreen(
                 equipoId = equipoId,
+                numeroSerie = numeroSerie, // <-- PASAMOS EL VALOR
                 viewModel = viewModel,
-                // ¡CAMBIO AQUÍ! La lambda ahora recibe el userId.
                 onNavigateBackToHome = { userId ->
-                    // Navega al inicio del usuario correcto y limpia el historial.
                     navController.navigate("home/$userId") {
                         popUpTo("home/$userId") { inclusive = true }
                     }
-                }
+                },
+                onBackClicked = { navController.popBackStack() }
             )
         }
     }

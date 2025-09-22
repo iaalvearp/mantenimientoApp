@@ -35,7 +35,7 @@ fun HomeScreen(
     userId: Int,
     homeViewModel: HomeViewModel,
     onLogout: () -> Unit,
-    onEquipoClicked: (equipoId: String) -> Unit
+    onEquipoClicked: (equipoId: String, numeroSerie: String) -> Unit
 ) {
     LaunchedEffect(key1 = userId) {
         homeViewModel.loadDataForUser(userId)
@@ -82,7 +82,7 @@ fun HomeScreen(
                     // Usamos nuestro nuevo y mejorado Composable, pasándole la acción de clic
                     EquipmentListItem(
                         equipo = equipo,
-                        onClick = { onEquipoClicked(equipo.id) }
+                        onClick = { onEquipoClicked(equipo.id, equipo.id) } // Pasamos el ID dos veces (como equipoId y como numeroSerie)
                     )
                 }
             }

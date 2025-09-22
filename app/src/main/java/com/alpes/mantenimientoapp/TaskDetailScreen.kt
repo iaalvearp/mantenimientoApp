@@ -1,4 +1,3 @@
-// Archivo: TaskDetailScreen.kt
 package com.alpes.mantenimientoapp
 
 import androidx.compose.foundation.background
@@ -232,8 +231,6 @@ private fun DateField(selectedDateMillis: Long, onClick: () -> Unit) {
 }
 
 // --- VISTA PREVIA Y CLASES FALSAS (MOCKS) ---
-// DENTRO DE TaskDetailScreen.kt
-
 private class FakeAppDao : AppDao {
     override suspend fun insertarUsuario(usuario: Usuario) {}
     override suspend fun insertarTarea(tarea: Tarea) {}
@@ -249,10 +246,12 @@ private class FakeAppDao : AppDao {
     override suspend fun insertarAgencia(agencia: Agencia) {}
     override suspend fun insertarCiudad(ciudad: Ciudad) {}
     override suspend fun insertarResultado(resultado: MantenimientoResultado) {}
-
-    // --- MÉTODOS AÑADIDOS QUE FALTABAN ---
     override suspend fun insertarFinalizacion(finalizacion: MantenimientoFinal) {}
     override suspend fun updateEquipoStatus(equipoId: String, newStatusId: Int) {}
+
+    // --- MÉTODOS AÑADIDOS QUE FALTABAN PARA LAS FOTOS ---
+    override suspend fun insertarMantenimientoFoto(foto: MantenimientoFoto) {}
+    override suspend fun obtenerFotosPorEquipoYTipo(equipoId: String, tipoFoto: String): List<MantenimientoFoto> = emptyList()
     // --- FIN DE LA CORRECCIÓN ---
 
     override suspend fun obtenerCiudadesPorProvincia(idDeLaProvincia: Int): List<Ciudad> = emptyList()
@@ -261,6 +260,8 @@ private class FakeAppDao : AppDao {
     override suspend fun obtenerUnidadNegocioPorId(unidadNegocioId: Int): UnidadNegocio? = null
     override suspend fun obtenerCiudadPorId(ciudadId: Int): Ciudad? = null
     override suspend fun obtenerAgenciaPorId(agenciaId: Int): Agencia? = null
+    // --- FIN DE LA CORRECCIÓN ---
+
     override suspend fun obtenerEquiposPorTarea(idDeLaTarea: Int): List<Equipo> = emptyList()
     override suspend fun obtenerTareasPorUsuario(idDelUsuario: Int): List<Tarea> = emptyList()
     override suspend fun obtenerUsuarioPorId(userId: Int): Usuario? = null

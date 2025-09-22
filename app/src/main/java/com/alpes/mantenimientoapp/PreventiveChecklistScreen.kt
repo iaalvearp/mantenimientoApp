@@ -66,6 +66,35 @@ fun PreventiveChecklistScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // --- INICIO DEL NUEVO BLOQUE DE CÓDIGO ---
+            // Este bloque solo se mostrará si estamos en el checklist de diagnóstico
+            if (checklistType == "diagnostico") {
+                item {
+                    Column {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            "ESTADO DEL FIRMWARE DEL EQUIPO",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        OutlinedTextField(
+                            value = uiState.versionFirmwareActual,
+                            onValueChange = { viewModel.onVersionActualChanged(it) },
+                            label = { Text("Versión actual de Firmware / Parche") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = uiState.versionFirmwareDespues,
+                            onValueChange = { viewModel.onVersionDespuesChanged(it) },
+                            label = { Text("Versión después de actualización") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+                }
+            }
+
             items(uiState.items) { itemState ->
                 ChecklistItem(
                     itemState = itemState,
@@ -94,7 +123,7 @@ fun PreventiveChecklistScreen(
 
             // Campo de Observaciones Generales
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
                 OutlinedTextField(
                     value = uiState.observacionGeneral,
                     onValueChange = { viewModel.onGeneralObservationChanged(it) },
@@ -122,6 +151,7 @@ fun PreventiveChecklistScreen(
                 }
             )
         }
+
     }
 }
 

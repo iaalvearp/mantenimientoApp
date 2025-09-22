@@ -22,7 +22,9 @@ fun MaintenanceActivitiesScreen(
     onPreventiveClicked: () -> Unit,
     onCorrectiveClicked: () -> Unit,
     onDiagnosticoClicked: () -> Unit,
-    onNextClicked: () -> Unit
+    onNextClicked: (String, String) -> Unit, // <-- AHORA ESPERA EL EQUIPOID Y EL NUMEROSERIE
+    equipoId: String, // <-- PARÁMETRO AÑADIDO
+    numeroSerie: String // <-- PARÁMETRO AÑADIDO
 ) {
     Box(
         modifier = Modifier
@@ -97,7 +99,7 @@ fun MaintenanceActivitiesScreen(
 
                     // Botón "Siguiente" en la parte inferior
                     Button(
-                        onClick = onNextClicked,
+                        onClick = { onNextClicked(equipoId, numeroSerie) },
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF57C00))
@@ -110,6 +112,8 @@ fun MaintenanceActivitiesScreen(
     }
 }
 
+// DENTRO DE MaintenanceActivitiesScreen.kt
+
 @Preview(showBackground = true)
 @Composable
 fun MaintenanceActivitiesScreenPreview() {
@@ -118,9 +122,13 @@ fun MaintenanceActivitiesScreenPreview() {
             onNavigateBack = {},
             onPreventiveClicked = {},
             onCorrectiveClicked = {},
-            // --- AJUSTE 2: Añadimos el parámetro que faltaba aquí ---
             onDiagnosticoClicked = {},
-            onNextClicked = {}
+            // AJUSTE 1: La función ahora espera dos argumentos, se los damos pero no los usamos.
+            onNextClicked = { _, _ -> },
+            // AJUSTE 2: Pasamos un ID de equipo ficticio.
+            equipoId = "EQUIPO_PRUEBA_ID",
+            // AJUSTE 3: Pasamos un número de serie ficticio.
+            numeroSerie = "SN_PRUEBA_123"
         )
     }
 }

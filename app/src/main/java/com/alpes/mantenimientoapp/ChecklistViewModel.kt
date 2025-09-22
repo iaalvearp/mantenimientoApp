@@ -18,7 +18,10 @@ data class ChecklistItemState(
 data class ChecklistUiState(
     val items: List<ChecklistItemState> = emptyList(),
     val tipo: String = "",
-    val observacionGeneral: String = ""
+    val observacionGeneral: String = "",
+    // --- LÍNEAS AÑADIDAS ---
+    val versionFirmwareActual: String = "",
+    val versionFirmwareDespues: String = ""
 )
 
 class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
@@ -79,6 +82,7 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
     fun saveChecklist(equipoId: String) {
         viewModelScope.launch {
             // Guardar respuestas de cada item
+            val currentState = _uiState.value
             _uiState.value.items.forEach { itemState ->
                 itemState.respuestasSeleccionadas.forEach { respuesta ->
                     val resultado = MantenimientoResultado(
@@ -101,6 +105,28 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                 )
                 dao.insertarResultado(obsResultado)
             }
+            // --- INICIO DEL NUEVO BLOQUE DE CÓDIGO ---
+            // Guardar versiones de firmware si no están vacías
+            if (currentState.versionFirmwareActual.isNotBlank()) {
+                val firmwareActualResultado = MantenimientoResultado(
+                    equipoId = equipoId,
+                    actividadId = -2, // ID especial para "Firmware Actual"
+                    respuestaValue = currentState.tipo,
+                    observacion = currentState.versionFirmwareActual
+                )
+                dao.insertarResultado(firmwareActualResultado)
+            }
+
+            if (currentState.versionFirmwareDespues.isNotBlank()) {
+                val firmwareDespuesResultado = MantenimientoResultado(
+                    equipoId = equipoId,
+                    actividadId = -3, // ID especial para "Firmware Después"
+                    respuestaValue = currentState.tipo,
+                    observacion = currentState.versionFirmwareDespues
+                )
+                dao.insertarResultado(firmwareDespuesResultado)
+            }
+
             _showSaveConfirmation.value = true
         }
     }
@@ -121,5 +147,13 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                 }
             )
         }
+    }
+
+    fun onVersionActualChanged(version: String) {
+        _uiState.update { it.copy(versionFirmwareActual = version) }
+    }
+
+    fun onVersionDespuesChanged(version: String) {
+        _uiState.update { it.copy(versionFirmwareDespues = version) }
     }
 }

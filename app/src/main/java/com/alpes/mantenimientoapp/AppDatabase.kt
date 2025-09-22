@@ -18,9 +18,10 @@ import androidx.room.RoomDatabase
         // --- AÑADIMOS LAS NUEVAS TABLAS ---
         Ciudad::class, Agencia::class, UnidadNegocio::class,
         // --- FIN DE LAS NUEVAS TABLAS ---
-        MantenimientoResultado::class, MantenimientoFinal::class
+        MantenimientoResultado::class, MantenimientoFinal::class,
+        MantenimientoFoto::class
     ],
-    version = 12, // <-- AUMENTAMOS LA VERSIÓN
+    version = 13, // <-- AUMENTAMOS LA VERSIÓN
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
