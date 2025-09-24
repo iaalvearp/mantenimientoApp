@@ -25,7 +25,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -34,6 +36,7 @@ import coil.compose.AsyncImage
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import com.alpes.mantenimientoapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -188,36 +191,68 @@ private fun PhotoAttachmentSection(
     onAddFromGallery: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+        // --- AJUSTE 1: Centrar el título ---
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center // <-- ¡AQUÍ ESTÁ LA MAGIA!
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Esta fila es solo para las miniaturas de las fotos y sigue siendo scrollable
+        if (photoUris.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                photoUris.forEach { uri ->
+                    AsyncImage(
+                        model = uri,
+                        contentDescription = "Foto adjunta",
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // --- AJUSTE 2: Botones que ocupan todo el ancho ---
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            photoUris.forEach { uri ->
-                AsyncImage(
-                    model = uri,
-                    contentDescription = "Foto adjunta",
-                    modifier = Modifier.size(100.dp).clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
+            Button(
+                onClick = onAddFromCamera,
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33A8FF))
+            ) {
+                Icon(Icons.Default.AddAPhoto, contentDescription = null)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Cámara")
+            }
+            Button(
+                onClick = onAddFromGallery,
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33A8FF))
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.gallery),
+                    contentDescription = null
                 )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Galería")
             }
-            // Botones para añadir más fotos
-            Column {
-                Button(onClick = onAddFromCamera) {
-                    Icon(Icons.Default.AddAPhoto, contentDescription = "Tomar foto")
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Cámara")
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Button(onClick = onAddFromGallery) {
-                    Icon(Icons.Default.AddAPhoto, contentDescription = "Adjuntar de galería")
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Galería")
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
