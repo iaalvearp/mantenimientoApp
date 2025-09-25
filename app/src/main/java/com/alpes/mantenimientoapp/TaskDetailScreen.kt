@@ -113,9 +113,26 @@ fun TaskDetailScreen(
                         )
 
                         Text("INFORMACIÓN DE EQUIPO", style = MaterialTheme.typography.titleMedium)
-                        DropdownField(label = "Tipo de equipo", options = listOf(equipo?.nombre ?: ""), selectedValue = equipo?.nombre)
-                        DropdownField(label = "Número de serie", options = listOf(equipo?.id ?: ""), selectedValue = equipo?.id)
-                        DropdownField(label = "Modelo del equipo", options = listOf(equipo?.modelo ?: ""), selectedValue = equipo?.modelo)
+                        val tipoEquipoText = listOfNotNull(
+                            uiState.equipo?.nombre,
+                            uiState.equipo?.caracteristicas?.takeIf { it.isNotBlank() }
+                        ).joinToString(" ")
+
+                        DropdownField(
+                            label = "Tipo de equipo",
+                            options = listOf(tipoEquipoText.ifEmpty { "N/A" }),
+                            selectedValue = tipoEquipoText.ifEmpty { "N/A" }
+                        )
+                        DropdownField(
+                            label = "Número de serie",
+                            options = listOf(uiState.equipo?.id ?: "N/A"),
+                            selectedValue = uiState.equipo?.id
+                        )
+                        DropdownField(
+                            label = "Modelo del equipo",
+                            options = listOf(uiState.equipo?.modelo ?: "N/A"),
+                            selectedValue = uiState.equipo?.modelo
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -134,9 +151,11 @@ fun TaskDetailScreen(
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDateMillis)
-        DatePickerDialog(onDismissRequest = { showDatePicker = false },
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
+                    // Simplemente tomamos el valor que nos da el calendario. Es el más puro.
                     selectedDateMillis = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
                     showDatePicker = false
                 }) { Text("Aceptar") }
@@ -200,7 +219,9 @@ private fun DropdownField(
 
 @Composable
 private fun DateField(selectedDateMillis: Long, onClick: () -> Unit) {
-    val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC") // Le decimos que trabaje en UTC
+    }
     val dateString = formatter.format(Date(selectedDateMillis))
     val interactionSource = remember { MutableInteractionSource() }
 

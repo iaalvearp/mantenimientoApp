@@ -28,35 +28,45 @@ open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
 
     open fun loadDataForEquipo(equipoId: String) {
         viewModelScope.launch {
+            // Primero, siempre buscamos el equipo.
             val equipo = dao.obtenerEquipoPorId(equipoId)
-            val tarea = equipo?.let { dao.obtenerTareaPorId(it.tareaId) }
 
-            if (tarea != null) {
-                val cliente = dao.obtenerClientePorId(tarea.clienteId)
-                val proyecto = dao.obtenerProyectoPorId(tarea.proyectoId)
-                val provincia = dao.obtenerProvinciaPorId(tarea.provinciaId)
-                val ciudad = dao.obtenerCiudadPorId(tarea.ciudadId)
-                val unidadNegocio = dao.obtenerUnidadNegocioPorId(tarea.unidadNegocioId)
-                val agencia = dao.obtenerAgenciaPorId(tarea.agenciaId)
+            // Actualizamos el estado inmediatamente con la información del equipo que encontramos.
+            _uiState.update { it.copy(equipo = equipo) }
 
-                val ciudadesOptions = provincia?.id?.let { dao.obtenerCiudadesPorProvincia(it) } ?: emptyList()
-                val unidadesNegocioOptions = provincia?.id?.let { dao.obtenerUnidadesNegocioPorProvincia(it) } ?: emptyList()
-                val agenciasOptions = unidadNegocio?.id?.let { dao.obtenerAgenciasPorUnidadNegocio(it) } ?: emptyList()
+            // Luego, si el equipo existe, intentamos buscar su tarea y datos relacionados.
+            if (equipo != null) {
+                val tarea = dao.obtenerTareaPorId(equipo.tareaId)
 
-                _uiState.update {
-                    it.copy(
-                        equipo = equipo,
-                        tarea = tarea,
-                        cliente = cliente,
-                        proyecto = proyecto,
-                        provincia = provincia,
-                        ciudad = ciudad,
-                        unidadNegocio = unidadNegocio,
-                        agencia = agencia,
-                        ciudadesOptions = ciudadesOptions,
-                        unidadesNegocioOptions = unidadesNegocioOptions,
-                        agenciasOptions = agenciasOptions
-                    )
+                // Si la tarea existe (no es un equipo local), cargamos el resto.
+                if (tarea != null) {
+                    val cliente = dao.obtenerClientePorId(tarea.clienteId)
+                    val proyecto = dao.obtenerProyectoPorId(tarea.proyectoId)
+                    val provincia = dao.obtenerProvinciaPorId(tarea.provinciaId)
+                    val ciudad = dao.obtenerCiudadPorId(tarea.ciudadId)
+                    val unidadNegocio = dao.obtenerUnidadNegocioPorId(tarea.unidadNegocioId)
+                    val agencia = dao.obtenerAgenciaPorId(tarea.agenciaId)
+
+                    // Obtenemos las listas de opciones para los dropdowns
+                    val ciudadesOptions = provincia?.id?.let { dao.obtenerCiudadesPorProvincia(it) } ?: emptyList()
+                    val unidadesNegocioOptions = provincia?.id?.let { dao.obtenerUnidadesNegocioPorProvincia(it) } ?: emptyList()
+                    val agenciasOptions = unidadNegocio?.id?.let { dao.obtenerAgenciasPorUnidadNegocio(it) } ?: emptyList()
+
+                    _uiState.update {
+                        it.copy(
+                            // Ya tenemos el equipo, actualizamos el resto
+                            tarea = tarea,
+                            cliente = cliente,
+                            proyecto = proyecto,
+                            provincia = provincia,
+                            ciudad = ciudad,
+                            unidadNegocio = unidadNegocio,
+                            agencia = agencia,
+                            ciudadesOptions = ciudadesOptions,
+                            unidadesNegocioOptions = unidadesNegocioOptions,
+                            agenciasOptions = agenciasOptions
+                        )
+                    }
                 }
             }
         }

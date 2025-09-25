@@ -11,5 +11,6 @@ data class Equipo(
     val caracteristicas: String,
     val estadoId: Int,
     val tareaId: Int,
-    val syncPending: Boolean // <-- ESTE ES EL CAMPO AÑADIDO
+    val syncPending: Boolean,
+    val esSincronizado: Boolean = false // <-- AÑADE ESTA LÍNEA
 )

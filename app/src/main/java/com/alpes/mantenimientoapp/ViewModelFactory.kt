@@ -17,6 +17,9 @@ class ViewModelFactory(private val dao: AppDao, private val application: Applica
             modelClass.isAssignableFrom(FinalizacionViewModel::class.java) -> {
                 FinalizacionViewModel(dao, application) as T
             }
+            modelClass.isAssignableFrom(AddEquipmentViewModel::class.java) -> {
+                AddEquipmentViewModel(dao) as T
+            }
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }

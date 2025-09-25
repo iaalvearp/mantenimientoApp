@@ -35,7 +35,8 @@ fun HomeScreen(
     userId: Int,
     homeViewModel: HomeViewModel,
     onLogout: () -> Unit,
-    onEquipoClicked: (equipoId: String, numeroSerie: String) -> Unit
+    onEquipoClicked: (equipoId: String, numeroSerie: String) -> Unit,
+    onAddEquipmentClicked: () -> Unit // <-- AÑADE ESTA LÍNEA
 ) {
     LaunchedEffect(key1 = userId) {
         homeViewModel.loadDataForUser(userId)
@@ -51,11 +52,10 @@ fun HomeScreen(
             AppDrawerContent(
                 usuario = uiState.usuario,
                 rol = uiState.rol,
-                // --- INICIO DE LA MODIFICACIÓN ---
                 onItemClicked = {
                     scope.launch { drawerState.close() }
                 },
-                // --- FIN DE LA MODIFICACIÓN ---
+                onAddEquipmentClicked = onAddEquipmentClicked, // <-- CONECTA EL PARÁMETRO AQUÍ
                 onLogoutClicked = onLogout
             )
         }
@@ -94,7 +94,8 @@ fun HomeScreen(
 fun AppDrawerContent(
     usuario: Usuario?,
     rol: Rol?,
-    onItemClicked: () -> Unit, // <-- PARÁMETRO AÑADIDO
+    onItemClicked: () -> Unit,
+    onAddEquipmentClicked: () -> Unit, // <-- AÑADE ESTE PARÁMETRO
     onLogoutClicked: () -> Unit
 ) {
     // AJUSTE 1: Aplicamos el fondo naranja a todo el contenedor del menú.
@@ -161,8 +162,11 @@ fun AppDrawerContent(
                 icon = { Icon(Icons.Default.Add, "Agregar Equipo") },
                 label = { Text("Agregar Equipo") },
                 selected = false,
-                onClick = { onItemClicked() },
-                colors = itemColors // Aplicamos los colores
+                onClick = {
+                    onItemClicked()
+                    onAddEquipmentClicked() // <-- AÑADE ESTA LLAMADA
+                },
+                colors = itemColors
             )
 
             // AJUSTE 3: Hacemos que el divisor también contraste en blanco.
@@ -190,7 +194,8 @@ fun HomeScreenPreview() {
         AppDrawerContent(
             usuario = Usuario(1, "Juan Perez", "juan.perez@example.com", "123", 1),
             rol = Rol(1, "Técnico de Campo"),
-            onItemClicked = {}, // <-- PARÁMETRO AÑADIDO QUE FALTABA
+            onItemClicked = {},
+            onAddEquipmentClicked = {},
             onLogoutClicked = {}
         )
     }

@@ -58,6 +58,9 @@ fun AppNavigation() {
                 onEquipoClicked = { equipoId, numeroSerie -> // Ahora pasamos ambos datos
                     // Navegamos a la pantalla de detalle
                     navController.navigate("taskDetail/$equipoId/$numeroSerie")
+                },
+                onAddEquipmentClicked = { // <-- AÑADE ESTE BLOQUE
+                    navController.navigate("addEquipment")
                 }
             )
         }
@@ -182,6 +185,18 @@ fun AppNavigation() {
                     }
                 },
                 onBackClicked = { navController.popBackStack() }
+            )
+        }
+
+        composable("addEquipment") {
+            val viewModel: AddEquipmentViewModel = viewModel(factory = viewModelFactory)
+            AddEquipmentScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                // --- CONECTAMOS LA NAVEGACIÓN AL DETALLE ---
+                onEquipoClicked = { equipoId, numeroSerie ->
+                    navController.navigate("taskDetail/$equipoId/$numeroSerie")
+                }
             )
         }
     }
