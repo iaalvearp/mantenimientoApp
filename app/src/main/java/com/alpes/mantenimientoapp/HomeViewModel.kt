@@ -34,7 +34,7 @@ class HomeViewModel(private val dao: AppDao) : ViewModel() {
             val tareas = dao.obtenerTareasPorUsuario(userId)
             val todosLosEquipos = mutableListOf<Equipo>()
             tareas.forEach { tarea ->
-                todosLosEquipos.addAll(dao.obtenerEquiposPorTarea(tarea.id))
+                todosLosEquipos.addAll(dao.obtenerEquiposPorTareaAsignada(tarea.id))
             }
 
             // Actualizamos el estado con toda la información nueva.

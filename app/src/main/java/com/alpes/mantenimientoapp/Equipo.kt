@@ -12,5 +12,6 @@ data class Equipo(
     val estadoId: Int,
     val tareaId: Int,
     val syncPending: Boolean,
-    val esSincronizado: Boolean = false // <-- AÑADE ESTA LÍNEA
+    val esSincronizado: Boolean = false,
+    val creadoPorUsuarioId: Int? = null
 )

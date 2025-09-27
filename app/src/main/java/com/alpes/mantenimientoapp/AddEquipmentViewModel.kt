@@ -27,14 +27,14 @@ class AddEquipmentViewModel(private val dao: AppDao) : ViewModel() {
     fun onModeloChanged(valor: String) { _uiState.update { it.copy(modelo = valor) } }
     fun onCaracteristicasChanged(valor: String) { _uiState.update { it.copy(caracteristicas = valor) } }
 
-    fun loadLocalEquipment() {
+    fun loadLocalEquipment(userId: Int) {
         viewModelScope.launch {
-            val equipos = dao.obtenerEquiposPorTarea(-1)
+            val equipos = dao.obtenerEquiposLocalesPorUsuario(userId) // Usa la nueva función
             _uiState.update { it.copy(equiposLocales = equipos) }
         }
     }
 
-    fun saveEquipment() {
+    fun saveEquipment(userId: Int) {
         viewModelScope.launch {
             val currentState = _uiState.value
             val equipoNuevo = Equipo(
@@ -45,12 +45,15 @@ class AddEquipmentViewModel(private val dao: AppDao) : ViewModel() {
                 estadoId = 1,
                 tareaId = -1,
                 syncPending = true,
-                esSincronizado = false
+                esSincronizado = false,
+                creadoPorUsuarioId = userId
             )
+
             dao.insertarEquipo(equipoNuevo)
+            loadLocalEquipment(userId)
 
             // Refrescamos la lista y limpiamos el formulario en una sola acción
-            val equiposActualizados = dao.obtenerEquiposPorTarea(-1)
+            val equiposActualizados = dao.obtenerEquiposPorTareaAsignada(-1)
             _uiState.update {
                 it.copy(
                     equiposLocales = equiposActualizados,

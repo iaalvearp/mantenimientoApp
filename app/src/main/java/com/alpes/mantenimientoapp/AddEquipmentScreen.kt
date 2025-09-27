@@ -1,4 +1,3 @@
-// Archivo: AddEquipmentScreen.kt
 package com.alpes.mantenimientoapp
 
 import androidx.compose.foundation.background
@@ -20,13 +19,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun AddEquipmentScreen(
     viewModel: AddEquipmentViewModel,
+    userId: Int,
     onNavigateBack: () -> Unit,
     onEquipoClicked: (equipoId: String, numeroSerie: String) -> Unit // Para navegar al detalle
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(key1 = Unit) {
-        viewModel.loadLocalEquipment()
+        viewModel.loadLocalEquipment(userId)
     }
 
     Box(
@@ -90,7 +90,7 @@ fun AddEquipmentScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                         Button(
-                            onClick = { viewModel.saveEquipment() },
+                            onClick = { viewModel.saveEquipment(userId) },
                             modifier = Modifier.fillMaxWidth().height(50.dp),
                             shape = RoundedCornerShape(12.dp),
                             enabled = uiState.numeroSerie.isNotBlank() && uiState.nombre.isNotBlank(),

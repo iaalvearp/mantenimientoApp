@@ -53,9 +53,6 @@ interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarMantenimientoFoto(foto: MantenimientoFoto)
 
-    @Query("SELECT * FROM equipos WHERE tareaId = :idDeLaTarea")
-    suspend fun obtenerEquiposPorTarea(idDeLaTarea: Int): List<Equipo>
-
     @Query("SELECT * FROM tareas WHERE usuarioId = :idDelUsuario")
     suspend fun obtenerTareasPorUsuario(idDelUsuario: Int): List<Tarea>
 
@@ -116,4 +113,13 @@ interface AppDao {
 
     @Query("SELECT * FROM mantenimiento_fotos WHERE equipoId = :equipoId AND tipoFoto = :tipoFoto")
     suspend fun obtenerFotosPorEquipoYTipo(equipoId: String, tipoFoto: String): List<MantenimientoFoto>
+
+    @Query("SELECT * FROM equipos WHERE tareaId = :idDeLaTarea")
+    suspend fun obtenerEquiposPorTareaAsignada(idDeLaTarea: Int): List<Equipo>
+
+    @Query("SELECT * FROM equipos WHERE tareaId = -1 AND creadoPorUsuarioId = :idDelUsuario")
+    suspend fun obtenerEquiposLocalesPorUsuario(idDelUsuario: Int): List<Equipo>
+
+    @Query("SELECT DISTINCT nombre FROM equipos ORDER BY nombre ASC")
+    suspend fun getUniqueEquipmentNames(): List<String>
 }

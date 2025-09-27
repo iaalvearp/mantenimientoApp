@@ -101,13 +101,13 @@ fun TaskDetailScreen(
                             }
                         }
                         DropdownField(
-                            label = "Unidad de negocio",
+                            label = "Localidad, oficina, subestación",
                             options = uiState.unidadesNegocioOptions.map { it.nombre },
                             selectedValue = uiState.unidadNegocio?.nombre
                         )
                         DateField(selectedDateMillis = selectedDateMillis, onClick = { showDatePicker = true })
                         DropdownField(
-                            label = "Agencia, oficina, subestación",
+                            label = "Lugar fisico",
                             options = uiState.agenciasOptions.map { it.nombre },
                             selectedValue = uiState.agencia?.nombre
                         )
@@ -252,6 +252,10 @@ private fun DateField(selectedDateMillis: Long, onClick: () -> Unit) {
 }
 
 // --- VISTA PREVIA Y CLASES FALSAS (MOCKS) ---
+// DENTRO DE TaskDetailScreen.kt
+
+// DENTRO DE TaskDetailScreen.kt
+
 private class FakeAppDao : AppDao {
     override suspend fun insertarUsuario(usuario: Usuario) {}
     override suspend fun insertarTarea(tarea: Tarea) {}
@@ -269,21 +273,14 @@ private class FakeAppDao : AppDao {
     override suspend fun insertarResultado(resultado: MantenimientoResultado) {}
     override suspend fun insertarFinalizacion(finalizacion: MantenimientoFinal) {}
     override suspend fun updateEquipoStatus(equipoId: String, newStatusId: Int) {}
-
-    // --- MÉTODOS AÑADIDOS QUE FALTABAN PARA LAS FOTOS ---
     override suspend fun insertarMantenimientoFoto(foto: MantenimientoFoto) {}
+
+    // --- FUNCIONES CORRECTAS ---
+    override suspend fun obtenerEquiposPorTareaAsignada(idDeLaTarea: Int): List<Equipo> = emptyList()
+    override suspend fun obtenerEquiposLocalesPorUsuario(idDelUsuario: Int): List<Equipo> = emptyList()
+
+    // --- RESTO DE FUNCIONES ---
     override suspend fun obtenerFotosPorEquipoYTipo(equipoId: String, tipoFoto: String): List<MantenimientoFoto> = emptyList()
-    // --- FIN DE LA CORRECCIÓN ---
-
-    override suspend fun obtenerCiudadesPorProvincia(idDeLaProvincia: Int): List<Ciudad> = emptyList()
-    override suspend fun obtenerUnidadesNegocioPorProvincia(idDeLaProvincia: Int): List<UnidadNegocio> = emptyList()
-    override suspend fun obtenerAgenciasPorUnidadNegocio(idDeLaUnidad: Int): List<Agencia> = emptyList()
-    override suspend fun obtenerUnidadNegocioPorId(unidadNegocioId: Int): UnidadNegocio? = null
-    override suspend fun obtenerCiudadPorId(ciudadId: Int): Ciudad? = null
-    override suspend fun obtenerAgenciaPorId(agenciaId: Int): Agencia? = null
-    // --- FIN DE LA CORRECCIÓN ---
-
-    override suspend fun obtenerEquiposPorTarea(idDeLaTarea: Int): List<Equipo> = emptyList()
     override suspend fun obtenerTareasPorUsuario(idDelUsuario: Int): List<Tarea> = emptyList()
     override suspend fun obtenerUsuarioPorId(userId: Int): Usuario? = null
     override suspend fun obtenerRolPorId(rolId: Int): Rol? = null
@@ -296,6 +293,12 @@ private class FakeAppDao : AppDao {
     override suspend fun obtenerActividadesMantenimiento(): List<ActividadMantenimiento> = emptyList()
     override suspend fun obtenerPosiblesRespuestas(): List<PosibleRespuesta> = emptyList()
     override suspend fun obtenerActividadesConRespuestas(tipo: String): List<ActividadConRespuestas> = emptyList()
+    override suspend fun obtenerCiudadPorId(ciudadId: Int): Ciudad? = null
+    override suspend fun obtenerAgenciaPorId(agenciaId: Int): Agencia? = null
+    override suspend fun obtenerCiudadesPorProvincia(idDeLaProvincia: Int): List<Ciudad> = emptyList()
+    override suspend fun obtenerUnidadesNegocioPorProvincia(idDeLaProvincia: Int): List<UnidadNegocio> = emptyList()
+    override suspend fun obtenerAgenciasPorUnidadNegocio(idDeLaUnidad: Int): List<Agencia> = emptyList()
+    override suspend fun obtenerUnidadNegocioPorId(unidadNegocioId: Int): UnidadNegocio? = null
 }
 
 private class PreviewTaskDetailViewModel(initialState: TaskDetailUiState) : TaskDetailViewModel(dao = FakeAppDao()) {
