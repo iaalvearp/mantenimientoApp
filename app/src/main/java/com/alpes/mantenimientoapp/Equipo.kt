@@ -1,5 +1,4 @@
 package com.alpes.mantenimientoapp
-
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -9,9 +8,9 @@ data class Equipo(
     val nombre: String,
     val modelo: String,
     val caracteristicas: String,
-    val estadoId: Int,
-    val tareaId: Int,
-    val syncPending: Boolean,
+    var estadoId: Int,
+    var tareaId: Int,
+    val syncPending: Boolean = true,
     val esSincronizado: Boolean = false,
     val creadoPorUsuarioId: Int? = null
 )

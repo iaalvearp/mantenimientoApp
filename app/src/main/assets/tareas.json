@@ -1,99 +1,77 @@
 [
   {
     "id": 1,
-    "clienteId": 1,
-    "provinciaId": 13,
-    "ciudadId": 2,
-    "unidadNegocioId": 1,
     "usuarioId": 101,
-    "equipos": [
-      {
-        "id": "21980107133GJ7000257",
-        "nombre": "SWITCH CAPA 3",
-        "modelo": "S5730-68C-SI-AC",
-        "caracteristicas": "(48 Ethernet 10/100/1000 ports,4 10 Gig SFP+, AC 110/220V)",
-        "estadoId": 2
-      },
-      {
-        "id": "21980105812SJ4600371",
-        "nombre": "SWITCH CAPA 2",
-        "modelo": "S5720-28X-LI-AC",
-        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-        "estadoId": 1
-      },
-      {
-        "id": "21980105812SJ4600293",
-        "nombre": "SWITCH CAPA 2",
-        "modelo": "S5720-28X-LI-AC",
-        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-        "estadoId": 3
-      },
-      {
-        "id": "21980105812SJ4600373",
-        "nombre": "SWITCH CAPA 2",
-        "modelo": "S5720-28X-LI-AC",
-        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-        "estadoId": 1
-      },
-      {
-        "id": "21980105812SJ4600325",
-        "nombre": "SWITCH CAPA 2",
-        "modelo": "S5720-28X-LI-AC",
-        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-        "estadoId": 3
-      }
-    ]
+    "idEquipo": "21980107133GJ7000257"
   },
   {
     "id": 2,
-    "clienteId": 1,
-    "provinciaId": 13,
-    "ciudadId": 1,
-    "unidadNegocioId": 4,
+    "usuarioId": 101,
+    "idEquipo": "21980105812SJ4600371"
+  },
+  {
+    "id": 3,
+    "usuarioId": 101,
+    "idEquipo": "21980105812SJ4600293"
+  },
+  {
+    "id": 4,
+    "usuarioId": 101,
+    "idEquipo": "21980105812SJ4600373"
+  },
+  {
+    "id": 5,
+    "usuarioId": 101,
+    "idEquipo": "21980105812SJ4600325"
+  },
+  {
+    "id": 6,
+    "usuarioId": 101,
+    "idEquipo": "21980105812SJ4600326"
+  },
+  {
+    "id": 7,
+    "usuarioId": 101,
+    "idEquipo": "21980105812SJ4600318"
+  },
+  {
+    "id": 8,
     "usuarioId": 102,
-    "equipos": [
-      {
-        "id": "21980107133GJ7000255",
-        "nombre": "SWITCH CAPA 3",
-        "modelo": "S5730-68C-SI-AC",
-        "caracteristicas": "(48 Ethernet 10/100/1000 ports,4 10 Gig SFP+, AC 110/220V)",
-        "estadoId": 3
-      },
-      {
-        "id": "21980105812SJ4600336",
-        "nombre": "SWITCH CAPA 2",
-        "modelo": "S5720-28X-LI-AC",
-        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-        "estadoId": 1
-      },
-      {
-        "id": "21980105812SJ4600332",
-        "nombre": "SWITCH CAPA 2",
-        "modelo": "S5720-28X-LI-AC",
-        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-        "estadoId": 2
-      },
-      {
-        "id": "21980105812SJ4600322",
-        "nombre": "SWITCH CAPA 2",
-        "modelo": "S5720-28X-LI-AC",
-        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-        "estadoId": 2
-      },
-      {
-        "id": "21980105812SJ4600338",
-        "nombre": "SWITCH CAPA 2",
-        "modelo": "S5720-28X-LI-AC",
-        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-        "estadoId": 3
-      },
-      {
-        "id": "21980105812SJ4600317",
-        "nombre": "SWITCH CAPA 2",
-        "modelo": "S5720-28X-LI-AC",
-        "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-        "estadoId": 1
-      }
-    ]
+    "idEquipo": "21980105812SJ4600297"
+  },
+  {
+    "id": 9,
+    "usuarioId": 102,
+    "idEquipo": "21980105812SJ4600315"
+  },
+  {
+    "id": 10,
+    "usuarioId": 102,
+    "idEquipo": "21980107133GJ7000255"
+  },
+  {
+    "id": 11,
+    "usuarioId": 102,
+    "idEquipo": "21980105812SJ4600336"
+  },
+  {
+    "id": 12,
+    "usuarioId": 102,
+    "idEquipo": "21980105812SJ4600332"
+  },
+  {
+    "id": 13,
+    "usuarioId": 102,
+    "idEquipo": "21980105812SJ4600322"
+  },
+  {
+    "id": 14,
+    "usuarioId": 102,
+    "idEquipo": "21980105812SJ4600338"
+  },
+  {
+    "id": 15,
+    "usuarioId": 102,
+    "idEquipo": "21980105812SJ4600317"
   }
 ]

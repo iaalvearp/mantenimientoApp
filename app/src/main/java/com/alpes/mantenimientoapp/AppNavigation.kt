@@ -79,11 +79,10 @@ fun AppNavigation() {
 
             TaskDetailScreen(
                 equipoId = equipoId,
+                numeroSerie = numeroSerie, // 2. Se lo pasamos a la pantalla
                 viewModel = taskDetailViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onNextClicked = {
-                    // Aquí es donde va la navegación.
-                    // Le decimos que vaya a la siguiente pantalla pasando ambos datos.
                     navController.navigate("maintenanceActivities/$equipoId/$numeroSerie")
                 }
             )

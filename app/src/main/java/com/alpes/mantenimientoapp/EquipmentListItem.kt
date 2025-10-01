@@ -98,12 +98,15 @@ fun EquipmentListItemPreview() {
                     id = "21980107133GJ7000257",
                     nombre = "SWITCH CAPA 3",
                     modelo = "S5730-68C-SI-AC",
-                    caracteristicas = "(48 Ethernet 10/100/1000 ports,4 10 Gig SFP+, AC 110/22V)",
-                    estadoId = 2,
+                    caracteristicas = "(48 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+                    estadoId = 2, // EN PROGRESO
                     tareaId = 1,
-                    syncPending = false
+                    // --- PARÁMETROS CORREGIDOS ---
+                    syncPending = false,
+                    esSincronizado = false,
+                    creadoPorUsuarioId = 101
                 ),
-                onClick = {} // En el preview, el clic no hace nada
+                onClick = {}
             )
             EquipmentListItem(
                 equipo = Equipo(
@@ -113,7 +116,9 @@ fun EquipmentListItemPreview() {
                     caracteristicas = "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
                     estadoId = 3,
                     tareaId = 1,
-                    syncPending = false
+                    syncPending = false,
+                    esSincronizado = false,
+                    creadoPorUsuarioId = 102
                 ),
                 onClick = {}
             )

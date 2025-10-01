@@ -27,19 +27,24 @@
     }
   ],
 
-  "proyectos": [
-    {
-      "id": 1,
-      "nombre": "CORP SERVICIO DE SOPORTE MANTENIMIENTO Y GARANTÍA DE LOS EQUIPOS DE NETWORKING HUAWEI DE CNEL EP GTI"
-    }
-  ],
-
   "clientes": [
     {
       "id": 1,
       "nombre": "cnel",
-      "nombreCompleto": "CORPORACION NACIONAL DE ELECTRICIDAD CNEL EP"
+      "nombreCompleto": "CORPORACION NACIONAL DE ELECTRICIDAD CNEL EP",
+      "proyectos": [
+        {
+          "id": 1,
+          "nombre": "CORP SERVICIO DE SOPORTE MANTENIMIENTO Y GARANTÍA DE LOS EQUIPOS DE NETWORKING HUAWEI DE CNEL EP GTI"
+        }
+      ]
     }
+  ],
+
+  "unidadesNegocio": [
+    { "id": 1, "nombre": "GUAYAS", "ciudadId": 3, "provinciaId": 9 },
+    { "id": 2, "nombre": "GUAYAS - LOS RIOS", "ciudadId": 4, "provinciaId": 9 },
+    { "id": 3, "nombre": "MANABI", "ciudadId": 1, "provinciaId": 13 }
   ],
 
   "ubicacion": [
@@ -47,18 +52,35 @@
       "id": 9,
       "provincia": "GUAYAS",
       "ciudades": [
-        { "id": 3, "nombre": "GUAYAQUIL" },
-        { "id": 4, "nombre": "DURAN" }
-      ],
-      "unidadNegocio": [
         {
-          "id": 1,
-          "nombre": "AGENCIA GUAYAQUIL",
-          "ciudad": 1,
+          "id": 3,
+          "nombre":"GUAYAQUIL",
           "agencia": [
             {
               "id": 1,
-              "nombre": "POR DEFINIR"
+              "nombre": "AGENCIA GUAYAQUIL",
+              "unidadNegocioId": 1
+            },
+            {
+              "id": 2,
+              "nombre": "AGENCIA GUAYACANES",
+              "unidadNegocioId": 1
+            }
+          ]
+        },
+        {
+          "id":4,
+          "nombre": "DURAN",
+          "agencia": [
+            {
+              "id": 1,
+              "nombre": "AGENCIA DURAN",
+              "unidadNegocioId": 2
+            },
+            {
+              "id": 2,
+              "nombre": "AGENCIA RECREO",
+              "unidadNegocioId": 2
             }
           ]
         }
@@ -68,51 +90,35 @@
       "id": 13,
       "provincia": "MANABI",
       "ciudades": [
-        { "id": 1, "nombre": "MANTA" },
-        { "id": 2, "nombre": "PORTOVIEJO" }
-      ],
-      "unidadNegocio": [
         {
           "id": 1,
-          "nombre": "AGENCIA PRIZA",
-          "ciudad": 1,
+          "nombre": "MANTA",
           "agencia": [
             {
               "id": 1,
-              "nombre": "POR DEFINIR"
+              "nombre": "SUBESTACION MANTA 1",
+              "unidadNegocioId": 3
+            },
+            {
+              "id": 2,
+              "nombre": "EQUIPOS EN POSTE",
+              "unidadNegocioId": 3
             }
           ]
         },
         {
           "id": 2,
-          "nombre": "AGENCIA PORTOVIEJO COMERCIAL",
-          "ciudad": 2,
+          "nombre": "PORTOVIEJO",
           "agencia": [
             {
               "id": 1,
-              "nombre": "POR DEFINIR"
-            }
-          ]
-        },
-        {
-          "id": 3,
-          "nombre": "SUBESTACION MANTA 1",
-          "ciudad": 1,
-          "agencia": [
+              "nombre": "AGENCIA PRIZA",
+              "unidadNegocioId": 3
+            },
             {
-              "id": 1,
-              "nombre": "POR DEFINIR"
-            }
-          ]
-        },
-        {
-          "id": 4,
-          "nombre": "EQUIPOS EN POSTE",
-          "ciudad": 2,
-          "agencia": [
-            {
-              "id": 1,
-              "nombre": "POR DEFINIR"
+              "id": 2,
+              "nombre": "AGENCIA PORTOVIEJO COMERCIAL",
+              "unidadNegocioId": 3
             }
           ]
         }
@@ -122,154 +128,196 @@
 
   "tiposEquipos": [
     {
-      "id": "21980107133GJ7000257",
-      "nombre": "SWITCH CAPA 3",
-      "caracteristicas": "(48 Ethernet 10/100/1000 ports,4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5730-68C-SI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 1,
-      "agencia": 1
+      "id": 1,
+      "clienteId": 1,
+      "proyectoId": 1,
+      "provinciaId": 9,
+      "ciudadId": 3,
+      "unidadNegocioId": 1,
+      "agenciaId": 1,
+      "equipos": [
+        {
+          "id": "21980107133GJ7000257",
+          "nombre": "SWITCH CAPA 3",
+          "modelo": "S5730-68C-SI-AC",
+          "caracteristicas": "(48 Ethernet 10/100/1000 ports,4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        },
+        {
+          "id": "21980105812SJ4600371",
+          "nombre": "SWITCH CAPA 2",
+          "modelo": "S5720-28X-LI-AC",
+          "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        }
+      ]
     },
     {
-      "id": "21980105812SJ4600371",
-      "nombre": "SWITCH CAPA 2",
-      "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5720-28X-LI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 1,
-      "agencia": 1
+      "id": 2,
+      "clienteId": 1,
+      "proyectoId": 1,
+      "provinciaId": 9,
+      "ciudadId": 3,
+      "unidadNegocioId": 1,
+      "agenciaId": 2,
+      "equipos": [
+        {
+          "id": "21980105812SJ4600293",
+          "nombre": "SWITCH CAPA 2",
+          "modelo": "S5720-28X-LI-AC",
+          "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        },
+        {
+          "id": "21980105812SJ4600373",
+          "nombre": "SWITCH CAPA 2",
+          "modelo": "S5720-28X-LI-AC",
+          "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        }
+      ]
     },
     {
-      "id": "21980105812SJ4600293",
-      "nombre": "SWITCH CAPA 2",
-      "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5720-28X-LI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 1,
-      "agencia": 1
+      "id": 3,
+      "clienteId": 1,
+      "proyectoId": 1,
+      "provinciaId": 9,
+      "ciudadId": 4,
+      "unidadNegocioId": 2,
+      "agenciaId": 1,
+      "equipos": [
+        {
+          "id": "21980105812SJ4600325",
+          "nombre": "SWITCH CAPA 2",
+          "modelo": "S5720-28X-LI-AC",
+          "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        }
+      ]
     },
     {
-      "id": "21980105812SJ4600373",
-      "nombre": "SWITCH CAPA 2",
-      "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5720-28X-LI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 1,
-      "agencia": 1
+      "id": 4,
+      "clienteId": 1,
+      "proyectoId": 1,
+      "provinciaId": 9,
+      "ciudadId": 4,
+      "unidadNegocioId": 2,
+      "agenciaId": 2,
+      "equipos": [
+        {
+          "id": "21980105812SJ4600297",
+          "nombre": "SWITCH CAPA 2",
+          "modelo": "S5720-28X-LI-AC",
+          "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        }
+      ]
     },
     {
-      "id": "21980105812SJ4600325",
-      "nombre": "SWITCH CAPA 2",
-      "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5720-28X-LI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 1,
-      "agencia": 1
+      "id": 5,
+      "clienteId": 1,
+      "proyectoId": 1,
+      "provinciaId": 13,
+      "ciudadId": 1,
+      "unidadNegocioId": 3,
+      "agenciaId": 1,
+      "equipos": [
+        {
+          "id": "21980105812SJ4600326",
+          "nombre": "SWITCH CAPA 2",
+          "modelo": "S5720-28X-LI-AC",
+          "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        },
+        {
+          "id": "21980105812SJ4600318",
+          "nombre": "SWITCH CAPA 2", "modelo":"S5720-28X-LI-AC",
+          "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        }
+      ]
     },
     {
-      "id": "21980105812SJ4600297",
-      "nombre": "SWITCH CAPA 2",
-      "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5720-28X-LI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 2,
-      "agencia": 1
+      "id": 6,
+      "clienteId": 1,
+      "proyectoId": 1,
+      "provinciaId": 13,
+      "ciudadId": 1,
+      "unidadNegocioId": 3,
+      "agenciaId": 2,
+      "equipos": [
+        {
+          "id": "21980105812SJ4600315",
+          "nombre": "SWITCH CAPA 2",
+          "modelo": "S5720-28X-LI-AC",
+          "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        }
+      ]
     },
     {
-      "id": "21980105812SJ4600326",
-      "nombre": "SWITCH CAPA 2",
-      "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5720-28X-LI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 2,
-      "agencia": 1
+      "id": 7,
+      "clienteId": 1,
+      "proyectoId": 1,
+      "provinciaId": 13,
+      "ciudadId": 2,
+      "unidadNegocioId": 3,
+      "agenciaId": 1,
+      "equipos": [
+        {
+          "id": "21980107133GJ7000255",
+          "nombre": "SWITCH CAPA 3",
+          "modelo": "S5730-68C-SI-AC",
+          "caracteristicas": "(48 Ethernet 10/100/1000 ports,4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        },
+        {
+          "id": "21980105812SJ4600336",
+          "nombre": "SWITCH CAPA 2",
+          "modelo": "S5720-28X-LI-AC",
+          "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        }
+      ]
     },
     {
-      "id": "21980105812SJ4600318",
-      "nombre": "SWITCH CAPA 2",
-      "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5720-28X-LI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 2,
-      "agencia": 1
-    },
-    {
-      "id": "21980105812SJ4600315",
-      "nombre": "SWITCH CAPA 2",
-      "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5720-28X-LI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 3,
-      "agencia": 1
-    },
-    {
-      "id": "21980107133GJ7000255",
-      "nombre": "SWITCH CAPA 3",
-      "caracteristicas": "(48 Ethernet 10/100/1000 ports,4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5730-68C-SI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 4,
-      "agencia": 1
-    },
-    {
-      "id": "21980105812SJ4600336",
-      "nombre": "SWITCH CAPA 2",
-      "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5720-28X-LI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 4,
-      "agencia": 1
-    },
-    {
-      "id": "21980105812SJ4600332",
-      "nombre": "SWITCH CAPA 2",
-      "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5720-28X-LI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 4,
-      "agencia": 1
-    },
-    {
-      "id": "21980105812SJ4600322",
-      "nombre": "SWITCH CAPA 2",
-      "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5720-28X-LI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 4,
-      "agencia": 1
-    },
-    {
-      "id": "21980105812SJ4600338",
-      "nombre": "SWITCH CAPA 2",
-      "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5720-28X-LI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 4,
-      "agencia": 1
-    },
-    {
-      "id": "21980105812SJ4600317",
-      "nombre": "SWITCH CAPA 2",
-      "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
-      "modelo": "S5720-28X-LI-AC",
-      "cliente": 1,
-      "provincia": 13,
-      "unidadNegocio": 4,
-      "agencia": 1
+      "id": 8,
+      "clienteId": 1,
+      "proyectoId": 1,
+      "provinciaId": 13,
+      "ciudadId": 2,
+      "unidadNegocioId": 3,
+      "agenciaId": 2,
+      "equipos": [
+        {
+          "id": "21980105812SJ4600332",
+          "nombre": "SWITCH CAPA 2",
+          "modelo": "S5720-28X-LI-AC",
+          "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        },
+        {
+          "id": "21980105812SJ4600322",
+          "nombre": "SWITCH CAPA 2",
+          "modelo": "S5720-28X-LI-AC",
+          "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        },
+        {
+          "id": "21980105812SJ4600338",
+          "nombre": "SWITCH CAPA 2",
+          "modelo": "S5720-28X-LI-AC",
+          "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        },
+        {
+          "id":"21980105812SJ4600317",
+          "nombre": "SWITCH CAPA 2",
+          "modelo": "S5720-28X-LI-AC",
+          "caracteristicas": "(24 Ethernet 10/100/1000 ports, 4 10 Gig SFP+, AC 110/220V)",
+          "estadoId": 1
+        }
+      ]
     }
   ],
 
