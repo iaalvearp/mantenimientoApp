@@ -78,4 +78,7 @@ interface AppDao {
 
     @Query("SELECT DISTINCT un.* FROM unidades_negocio un INNER JOIN agencias a ON un.id = a.unidadNegocioId WHERE a.ciudadId = :idDeLaCiudad ORDER BY un.nombre ASC")
     suspend fun getUnidadesNegocioByCiudad(idDeLaCiudad: Int): List<UnidadNegocio>
+
+    @Query("SELECT * FROM agencias LIMIT 10")
+    suspend fun DEBUG_getAllAgencias(): List<Agencia>
 }

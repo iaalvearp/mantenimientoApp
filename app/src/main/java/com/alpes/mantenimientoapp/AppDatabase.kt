@@ -21,7 +21,7 @@ import androidx.room.RoomDatabase
         MantenimientoResultado::class, MantenimientoFinal::class,
         MantenimientoFoto::class
     ],
-    version = 21, // <-- AUMENTAMOS LA VERSIÓN
+    version = 22, // <-- AUMENTAMOS LA VERSIÓN
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
