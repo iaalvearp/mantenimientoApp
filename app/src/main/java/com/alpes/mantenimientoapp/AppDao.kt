@@ -75,4 +75,7 @@ interface AppDao {
     suspend fun getUniqueModelos(): List<String>
     @Query("SELECT nombre, caracteristicas FROM equipos WHERE modelo = :modelo LIMIT 1")
     suspend fun getDetailsForModel(modelo: String): EquipoDetalles?
+
+    @Query("SELECT DISTINCT un.* FROM unidades_negocio un INNER JOIN agencias a ON un.id = a.unidadNegocioId WHERE a.ciudadId = :idDeLaCiudad ORDER BY un.nombre ASC")
+    suspend fun getUnidadesNegocioByCiudad(idDeLaCiudad: Int): List<UnidadNegocio>
 }

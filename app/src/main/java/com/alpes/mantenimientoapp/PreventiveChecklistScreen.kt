@@ -55,7 +55,7 @@ fun PreventiveChecklistScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { viewModel.saveChecklist(equipoId) }) {
-                Icon(Icons.Default.Save, contentDescription = "Guardar")
+                Icon(Icons.Filled.Save, contentDescription = "Guardar") // <-- LÍNEA CORREGIDA
             }
         }
     ) { paddingValues ->

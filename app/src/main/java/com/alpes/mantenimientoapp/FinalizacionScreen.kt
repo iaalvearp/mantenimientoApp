@@ -235,7 +235,7 @@ private fun PhotoAttachmentSection(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33A8FF))
             ) {
-                Icon(Icons.Default.AddAPhoto, contentDescription = null)
+                Icon(Icons.Filled.AddAPhoto, contentDescription = null)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Cámara")
             }

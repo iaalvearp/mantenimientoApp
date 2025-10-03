@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.ksp)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -34,12 +35,6 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-    buildFeatures {
-        compose = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
-    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -57,7 +52,9 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.material.icons.extended) {
+        exclude(group = "androidx.compose.material", module = "material")
+    }
 
     // Navegación
     implementation(libs.androidx.navigation.compose)
@@ -71,6 +68,7 @@ dependencies {
     implementation(libs.room.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.compose.ui.text)
+    implementation(libs.androidx.room.external.antlr)
     ksp(libs.room.compiler)
 
     // Gson

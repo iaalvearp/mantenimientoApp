@@ -187,14 +187,16 @@ fun AppNavigation() {
             )
         }
 
-        composable("addEquipment/{userId}") { backStackEntry ->
-            val userId = backStackEntry.arguments?.getInt("userId") ?: 0 // <-- OBTÉN EL userId
+        composable(
+            route = "addEquipment/{userId}",
+            arguments = listOf(navArgument("userId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getInt("userId") ?: 0
             val viewModel: AddEquipmentViewModel = viewModel(factory = viewModelFactory)
             AddEquipmentScreen(
                 viewModel = viewModel,
                 userId = userId,
                 onNavigateBack = { navController.popBackStack() },
-                // --- CONECTAMOS LA NAVEGACIÓN AL DETALLE ---
                 onEquipoClicked = { equipoId, numeroSerie ->
                     navController.navigate("taskDetail/$equipoId/$numeroSerie")
                 }

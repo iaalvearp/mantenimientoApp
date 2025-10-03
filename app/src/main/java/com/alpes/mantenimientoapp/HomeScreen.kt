@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.room.jarjarred.org.antlr.v4.codegen.model.Sync
 import com.alpes.mantenimientoapp.ui.theme.MantenimientoAppTheme
 import kotlinx.coroutines.launch
 
@@ -95,17 +96,15 @@ fun AppDrawerContent(
     usuario: Usuario?,
     rol: Rol?,
     onItemClicked: () -> Unit,
-    onAddEquipmentClicked: () -> Unit, // <-- AÑADE ESTE PARÁMETRO
+    onAddEquipmentClicked: () -> Unit,
     onLogoutClicked: () -> Unit
 ) {
-    // AJUSTE 1: Aplicamos el fondo naranja a todo el contenedor del menú.
     ModalDrawerSheet(modifier = Modifier.background(Color(0xFFF57C00))) {
         Column(
             modifier = Modifier.fillMaxWidth()
                 .background(Color(0xFFF57C00))
                 .fillMaxHeight(),
         ) {
-            // El encabezado ya era naranja, así que encaja perfectamente.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -113,7 +112,6 @@ fun AppDrawerContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // He reemplazado tu logo por un placeholder, asegúrate de usar el tuyo.
                 Image(
                     painter = painterResource(id = R.drawable.logowhite),
                     contentDescription = "Logo",
@@ -133,13 +131,11 @@ fun AppDrawerContent(
 
             Spacer(Modifier.height(16.dp))
 
-            // AJUSTE 2: Configuramos los colores de los ítems para que sean blancos.
             val itemColors = NavigationDrawerItemDefaults.colors(
                 selectedIconColor = Color.White,
                 selectedTextColor = Color.White,
                 unselectedIconColor = Color.White,
                 unselectedTextColor = Color.White,
-                // Un fondo sutil para el ítem seleccionado
                 selectedContainerColor = Color.White.copy(alpha = 0.2f),
                 unselectedContainerColor = Color.Transparent
             )
@@ -152,11 +148,12 @@ fun AppDrawerContent(
                 colors = itemColors
             )
             NavigationDrawerItem(
-                icon = { Icon(Icons.Default.Sync, "Sincronizar") },
+                // --- LÍNEA CORREGIDA ---
+                icon = { Icon(Icons.Filled.Sync, "Sincronizar") },
                 label = { Text("Sincronizar") },
                 selected = false,
                 onClick = { onItemClicked() },
-                colors = itemColors // Aplicamos los colores
+                colors = itemColors
             )
             NavigationDrawerItem(
                 icon = { Icon(Icons.Default.Add, "Agregar Equipo") },
@@ -164,23 +161,23 @@ fun AppDrawerContent(
                 selected = false,
                 onClick = {
                     onItemClicked()
-                    onAddEquipmentClicked() // <-- AÑADE ESTA LLAMADA
+                    onAddEquipmentClicked()
                 },
                 colors = itemColors
             )
 
-            // AJUSTE 3: Hacemos que el divisor también contraste en blanco.
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
                 color = Color.White.copy(alpha = 0.5f)
             )
 
             NavigationDrawerItem(
+                // --- LÍNEA CORREGIDA ---
                 icon = { Icon(Icons.AutoMirrored.Filled.Logout, "Cerrar Sesión") },
                 label = { Text("Cerrar Sesión") },
                 selected = false,
                 onClick = onLogoutClicked,
-                colors = itemColors // Aplicamos los colores
+                colors = itemColors
             )
         }
     }

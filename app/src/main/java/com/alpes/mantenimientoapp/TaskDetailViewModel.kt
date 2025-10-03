@@ -14,15 +14,16 @@ data class TaskDetailUiState(
     val proyectoSeleccionado: Proyecto? = null,
     val provinciaSeleccionada: Provincia? = null,
     val ciudadSeleccionada: Ciudad? = null,
-    val ciudadSearchText: String = "",
-    val unidadNegocioSeleccionada: UnidadNegocio? = null,
+    val unidadNegocioSeleccionada: UnidadNegocio? = null, // Se mantiene
     val agenciaSeleccionada: Agencia? = null,
     val allClientes: List<Cliente> = emptyList(),
     val allProvincias: List<Provincia> = emptyList(),
-    val allUnidadesNegocio: List<UnidadNegocio> = emptyList(),
     val proyectosFiltrados: List<Proyecto> = emptyList(),
     val ciudadesFiltradas: List<Ciudad> = emptyList(),
-    val agenciasFiltradas: List<Agencia> = emptyList()
+    // --- NUEVO: Lista para las unidades de negocio filtradas ---
+    val unidadesNegocioFiltradas: List<UnidadNegocio> = emptyList(),
+    val agenciasFiltradas: List<Agencia> = emptyList(),
+    val agenciaSearchText: String = ""
 )
 
 open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
@@ -31,13 +32,7 @@ open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    allClientes = dao.getAllClientes(),
-                    allProvincias = dao.getAllProvincias(),
-                    allUnidadesNegocio = dao.getAllUnidadesNegocio().distinctBy { u -> u.nombre }
-                )
-            }
+            _uiState.update { it.copy(allClientes = dao.getAllClientes(), allProvincias = dao.getAllProvincias()) }
         }
     }
 
@@ -50,87 +45,87 @@ open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
                 val tarea = dao.obtenerTareaPorId(equipo.tareaId)
                 if (tarea != null) {
                     val cliente = dao.obtenerClientePorId(tarea.clienteId)
-                    onClienteSelected(cliente, dao.obtenerProyectoPorId(tarea.proyectoId))
-
                     val provincia = dao.obtenerProvinciaPorId(tarea.provinciaId)
-                    onProvinciaSelected(provincia, dao.obtenerCiudadPorId(tarea.ciudadId))
-
+                    val ciudad = dao.obtenerCiudadPorId(tarea.ciudadId)
+                    // --- LÓGICA DE PRECARGA MODIFICADA ---
                     val unidadNegocio = dao.obtenerUnidadNegocioPorId(tarea.unidadNegocioId)
-                    // Llamada corregida
-                    onUnidadNegocioSelected(unidadNegocio)
+                    val agencia = dao.obtenerAgenciaPorId(tarea.agenciaId)
+
+                    onClienteSelected(cliente, dao.obtenerProyectoPorId(tarea.proyectoId))
+                    // La precarga ahora es más inteligente y va en orden
+                    onProvinciaSelected(provincia, autoSelectCity = ciudad, autoSelectUnidad = unidadNegocio, autoSelectAgencia = agencia)
                 }
             }
         }
     }
 
     fun onClienteSelected(cliente: Cliente?, autoSelectProject: Proyecto? = null) {
-        cliente?.let { cli ->
-            viewModelScope.launch {
-                val proyectos = dao.getProyectosByCliente(cli.id)
-                _uiState.update { state ->
-                    state.copy(
-                        clienteSeleccionado = cli,
-                        proyectosFiltrados = proyectos,
-                        proyectoSeleccionado = autoSelectProject ?: state.proyectoSeleccionado
-                    )
-                }
-            }
-        }
+        _uiState.update { it.copy(clienteSeleccionado = cliente, proyectoSeleccionado = autoSelectProject, proyectosFiltrados = emptyList()) }
+        cliente?.let { viewModelScope.launch { _uiState.update { it.copy(proyectosFiltrados = dao.getProyectosByCliente(cliente.id)) } } }
     }
-
     fun onProyectoSelected(proyecto: Proyecto) { _uiState.update { it.copy(proyectoSeleccionado = proyecto) } }
 
-    fun onProvinciaSelected(provincia: Provincia?, autoSelectCity: Ciudad? = null) {
-        provincia?.let { prov ->
+    // --- FUNCIÓN MODIFICADA: Ahora puede recibir la unidad de negocio y agencia a precargar ---
+    fun onProvinciaSelected(provincia: Provincia?, autoSelectCity: Ciudad? = null, autoSelectUnidad: UnidadNegocio? = null, autoSelectAgencia: Agencia? = null) {
+        _uiState.update { it.copy(
+            provinciaSeleccionada = provincia,
+            ciudadSeleccionada = null,
+            unidadNegocioSeleccionada = null,
+            agenciaSeleccionada = null,
+            ciudadesFiltradas = emptyList(),
+            unidadesNegocioFiltradas = emptyList(),
+            agenciasFiltradas = emptyList(),
+            agenciaSearchText = ""
+        )}
+        provincia?.let {
             viewModelScope.launch {
-                val ciudades = dao.obtenerCiudadesPorProvincia(prov.id)
-                _uiState.update { state ->
-                    state.copy(
-                        provinciaSeleccionada = prov,
-                        ciudadesFiltradas = ciudades,
-                        ciudadSeleccionada = autoSelectCity,
-                        agenciasFiltradas = emptyList(),
-                        agenciaSeleccionada = null
-                    )
-                }
-                autoSelectCity?.let { onCiudadSelected(it, _uiState.value.agenciaSeleccionada) }
+                _uiState.update { it.copy(ciudadesFiltradas = dao.obtenerCiudadesPorProvincia(provincia.id)) }
+                // Si hay una ciudad para precargar, la seleccionamos
+                autoSelectCity?.let { onCiudadSelected(it, autoSelectUnidad, autoSelectAgencia) }
             }
         }
     }
 
-    fun onCiudadSelected(ciudad: Ciudad, autoSelectAgencia: Agencia? = null) {
+    // --- FUNCIÓN MODIFICADA: Ahora carga las Unidades de Negocio ---
+    fun onCiudadSelected(ciudad: Ciudad, autoSelectUnidad: UnidadNegocio? = null, autoSelectAgencia: Agencia? = null) {
+        _uiState.update { it.copy(
+            ciudadSeleccionada = ciudad,
+            unidadNegocioSeleccionada = null,
+            agenciaSeleccionada = null,
+            unidadesNegocioFiltradas = emptyList(),
+            agenciasFiltradas = emptyList(),
+            agenciaSearchText = ""
+        )}
         viewModelScope.launch {
-            val agencias = dao.getAgenciasByCiudad(ciudad.id)
-            _uiState.update {
-                it.copy(
-                    ciudadSeleccionada = ciudad,
-                    agenciasFiltradas = agencias,
-                    agenciaSeleccionada = autoSelectAgencia
-                )
-            }
+            _uiState.update { it.copy(unidadesNegocioFiltradas = dao.getUnidadesNegocioByCiudad(ciudad.id)) }
+            // Si hay una unidad para precargar, la seleccionamos
+            autoSelectUnidad?.let { onUnidadNegocioSelected(it, autoSelectAgencia) }
         }
     }
 
-    fun onCiudadSearchTextChanged(text: String) {
-        _uiState.update { it.copy(ciudadSearchText = text) }
-        val provinciaId = _uiState.value.provinciaSeleccionada?.id
-        if (provinciaId != null) {
+    // --- NUEVA FUNCIÓN: Para manejar la selección de Unidad de Negocio ---
+    fun onUnidadNegocioSelected(unidadNegocio: UnidadNegocio, autoSelectAgencia: Agencia? = null) {
+        _uiState.update { it.copy(
+            unidadNegocioSeleccionada = unidadNegocio,
+            agenciaSeleccionada = null,
+            agenciasFiltradas = emptyList(),
+            agenciaSearchText = ""
+        )}
+        // Filtramos las agencias que pertenecen a la ciudad Y a la unidad de negocio seleccionadas
+        _uiState.value.ciudadSeleccionada?.let { ciudad ->
             viewModelScope.launch {
-                val allCiudadesDeProvincia = dao.obtenerCiudadesPorProvincia(provinciaId)
-                _uiState.update {
-                    it.copy(
-                        ciudadesFiltradas = allCiudadesDeProvincia.filter { ciudad ->
-                            ciudad.nombre.contains(text, ignoreCase = true)
-                        }
-                    )
-                }
+                val agencias = dao.getAgenciasByCiudad(ciudad.id).filter { it.unidadNegocioId == unidadNegocio.id }
+                _uiState.update { it.copy(agenciasFiltradas = agencias) }
+                // Si hay una agencia para precargar, la seleccionamos
+                autoSelectAgencia?.let { onAgenciaSelected(it) }
             }
         }
     }
 
-    fun onUnidadNegocioSelected(unidadNegocio: UnidadNegocio?) {
-        _uiState.update { it.copy(unidadNegocioSeleccionada = unidadNegocio) }
+    fun onAgenciaSelected(agencia: Agencia) {
+        // --- LÓGICA SIMPLIFICADA: Ya no necesita buscar la unidad de negocio ---
+        _uiState.update { it.copy(agenciaSeleccionada = agencia, agenciaSearchText = agencia.nombre) }
     }
 
-    fun onAgenciaSelected(agencia: Agencia) { _uiState.update { it.copy(agenciaSeleccionada = agencia) } }
+    fun onAgenciaSearchTextChanged(text: String) { _uiState.update { it.copy(agenciaSearchText = text) } }
 }
