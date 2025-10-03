@@ -1,4 +1,3 @@
-// Archivo: ChecklistViewModel.kt (COMPLETAMENTE ACTUALIZADO)
 package com.alpes.mantenimientoapp
 
 import android.util.Log
@@ -12,12 +11,12 @@ import kotlinx.coroutines.launch
 // --- CAMBIO: La nueva estructura para el estado de CADA item del checklist ---
 data class ChecklistItemState(
     val actividad: ActividadConRespuestas,
-    // Guarda la decisión inicial del técnico: null (sin responder), true (Sí), false (No)
+    // Para Preventivo/Correctivo
     val decisionSiNo: Boolean? = null,
-    // Guarda la sub-respuesta detallada que el técnico elige
     val subRespuestaSeleccionada: PosibleRespuesta? = null,
-    // Guarda el texto personalizado si la respuesta es "Otros"
-    val textoOtros: String = ""
+    val textoOtros: String = "",
+    // --- DIAGNÓSTICO: Nuevo campo para el checkbox ---
+    var isChecked: Boolean = false
 )
 
 // --- CAMBIO: El estado general de la UI ahora usa la nueva estructura de items ---
@@ -26,7 +25,10 @@ data class ChecklistUiState(
     val tipo: String = "",
     val observacionGeneral: String = "",
     val versionFirmwareActual: String = "",
-    val versionFirmwareDespues: String = ""
+    val versionFirmwareDespues: String = "",
+    // --- DIAGNÓSTICO: Nuevos estados para el diálogo de validación ---
+    val mostrarDialogoValidacion: Boolean = false,
+    val tareasNoCompletadas: List<String> = emptyList()
 )
 
 class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
@@ -42,10 +44,8 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
             val actividades = dao.obtenerActividadesConRespuestas(tipo)
             _uiState.update {
                 it.copy(
-                    // Al cargar, simplemente mapeamos las actividades a nuestro nuevo estado inicial
                     items = actividades.map { actividad -> ChecklistItemState(actividad = actividad) },
                     tipo = tipo,
-                    // Reseteamos los demás campos
                     observacionGeneral = "",
                     versionFirmwareActual = "",
                     versionFirmwareDespues = ""
@@ -100,31 +100,68 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
         }
     }
 
+    // --- DIAGNÓSTICO: Nueva función para manejar el cambio del Checkbox ---
+    fun onDiagnosticoCheckedChange(actividadId: Int, isChecked: Boolean) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                items = currentState.items.map { item ->
+                    if (item.actividad.actividad.id == actividadId && item.actividad.actividad.tipo == "diagnostico") {
+                        item.copy(isChecked = isChecked)
+                    } else {
+                        item
+                    }
+                }
+            )
+        }
+    }
+
     fun onGeneralObservationChanged(texto: String) {
         _uiState.update { it.copy(observacionGeneral = texto) }
     }
 
-    // --- LÓGICA DE GUARDADO COMPLETAMENTE REESCRITA ---
+    // --- LÓGICA DE GUARDADO ACTUALIZADA CON VALIDACIÓN ---
     fun saveChecklist(equipoId: String) {
         viewModelScope.launch {
             val currentState = _uiState.value
 
-            currentState.items.forEach { itemState ->
-                // Solo guardamos algo si el usuario ha tomado al menos la decisión de Sí/No
-                if (itemState.decisionSiNo != null) {
-                    val esOtro = itemState.subRespuestaSeleccionada?.value == "otros"
+            // --- DIAGNÓSTICO: Bloque de validación ---
+            if (currentState.tipo == "diagnostico") {
+                val tareasIncompletas = currentState.items
+                    .filter { !it.isChecked && it.actividad.posiblesRespuestas.isNotEmpty() } // Ignoramos items sin opciones
+                    .map { it.actividad.actividad.nombre }
 
-                    val resultado = MantenimientoResultado(
-                        equipoId = equipoId,
-                        actividadId = itemState.actividad.actividad.id,
-                        // Guardamos "si" o "no" para tu futuro formulario
-                        decisionSiNo = if (itemState.decisionSiNo) "si" else "no",
-                        // Si es "Otros", guardamos null aquí para no guardar "otros" como valor
-                        respuestaValue = if (!esOtro) itemState.subRespuestaSeleccionada?.value else null,
-                        // Si es "Otros", la observación es el texto del usuario. Si no, es la etiqueta de la opción.
-                        observacion = if (esOtro) itemState.textoOtros else itemState.subRespuestaSeleccionada?.label ?: ""
-                    )
-                    dao.insertarResultado(resultado)
+                if (tareasIncompletas.isNotEmpty()) {
+                    // Si hay tareas incompletas, mostramos el diálogo de error y no guardamos
+                    _uiState.update { it.copy(mostrarDialogoValidacion = true, tareasNoCompletadas = tareasIncompletas) }
+                    return@launch
+                }
+            }
+
+            // Si la validación pasa (o no es diagnóstico), procedemos a guardar
+            currentState.items.forEach { itemState ->
+                if (currentState.tipo == "diagnostico") {
+                    if (itemState.isChecked) {
+                        val resultado = MantenimientoResultado(
+                            equipoId = equipoId,
+                            actividadId = itemState.actividad.actividad.id,
+                            decisionSiNo = null,
+                            respuestaValue = "realizado", // Guardamos un valor estándar
+                            observacion = "Marcado como completado"
+                        )
+                        dao.insertarResultado(resultado)
+                    }
+                } else { // Lógica de Preventivo/Correctivo
+                    if (itemState.decisionSiNo != null) {
+                        val esOtro = itemState.subRespuestaSeleccionada?.value == "otros"
+                        val resultado = MantenimientoResultado(
+                            equipoId = equipoId,
+                            actividadId = itemState.actividad.actividad.id,
+                            decisionSiNo = if (itemState.decisionSiNo) "si" else "no",
+                            respuestaValue = if (!esOtro) itemState.subRespuestaSeleccionada?.value else null,
+                            observacion = if (esOtro) itemState.textoOtros else itemState.subRespuestaSeleccionada?.label ?: ""
+                        )
+                        dao.insertarResultado(resultado)
+                    }
                 }
             }
 
@@ -157,8 +194,11 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
         }
     }
 
-    fun dismissSaveConfirmation() {
-        _showSaveConfirmation.value = false
+    fun dismissSaveConfirmation() { _showSaveConfirmation.value = false }
+
+    // --- DIAGNÓSTICO: Nueva función para cerrar el diálogo de validación ---
+    fun dismissValidationDialog() {
+        _uiState.update { it.copy(mostrarDialogoValidacion = false, tareasNoCompletadas = emptyList()) }
     }
 
     // Funciones de versión de firmware (sin cambios)
