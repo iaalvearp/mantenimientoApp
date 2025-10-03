@@ -1,7 +1,9 @@
 // Archivo: PreventiveChecklistScreen.kt (COMPLETAMENTE RECONSTRUIDO)
 package com.alpes.mantenimientoapp
 
+
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,12 +12,13 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,6 +34,8 @@ fun PreventiveChecklistScreen(
 )  {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val showDialog by viewModel.showSaveConfirmation.collectAsStateWithLifecycle()
+    // --- NUEVO: Estado para controlar qué item está expandido (acordeón) ---
+    var expandedItemId by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(key1 = checklistType) {
         viewModel.loadChecklistData(checklistType)
@@ -71,16 +76,23 @@ fun PreventiveChecklistScreen(
 
             // --- LLAMADA AL NUEVO CHECKLISTITEM ---
             items(uiState.items) { itemState ->
+                val actividadId = itemState.actividad.actividad.id
                 ChecklistItem(
                     itemState = itemState,
+                    // --- NUEVOS PARÁMETROS PARA EL ACORDEÓN ---
+                    isExpanded = expandedItemId == actividadId,
+                    onExpand = {
+                        expandedItemId = if (expandedItemId == actividadId) null else actividadId
+                    },
+                    // --- El resto de parámetros se mantienen ---
                     onSiNoDecision = { decision ->
-                        viewModel.onSiNoDecision(itemState.actividad.actividad.id, decision)
+                        viewModel.onSiNoDecision(actividadId, decision)
                     },
                     onSubRespuestaSelected = { subRespuesta ->
-                        viewModel.onSubRespuestaSelected(itemState.actividad.actividad.id, subRespuesta)
+                        viewModel.onSubRespuestaSelected(actividadId, subRespuesta)
                     },
                     onOtrosTextChanged = { texto ->
-                        viewModel.onOtrosTextChanged(itemState.actividad.actividad.id, texto)
+                        viewModel.onOtrosTextChanged(actividadId, texto)
                     }
                 )
             }
@@ -123,6 +135,8 @@ fun PreventiveChecklistScreen(
 @Composable
 fun ChecklistItem(
     itemState: ChecklistItemState,
+    isExpanded: Boolean,
+    onExpand: () -> Unit,
     onSiNoDecision: (Boolean) -> Unit,
     onSubRespuestaSelected: (PosibleRespuesta) -> Unit,
     onOtrosTextChanged: (String) -> Unit
@@ -131,83 +145,107 @@ fun ChecklistItem(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Título de la actividad
-            Text(
-                text = itemState.actividad.actividad.nombre,
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Botones "Sí" y "No"
+        Column { // Columna principal de la tarjeta
+            // Fila del Título (con el clickable corregido)
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null, // <-- ¡LA CORRECCIÓN FINAL!
+                        onClick = onExpand
+                    )
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Button(
-                    onClick = { onSiNoDecision(true) },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (itemState.decisionSiNo == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) { Text("SÍ") }
-
-                Button(
-                    onClick = { onSiNoDecision(false) },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (itemState.decisionSiNo == false) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) { Text("NO") }
+                Text(
+                    text = itemState.actividad.actividad.nombre,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (isExpanded) "Cerrar" else "Expandir"
+                )
             }
 
-            AnimatedVisibility(visible = itemState.decisionSiNo != null) {
-                Column {
-                    Spacer(modifier = Modifier.height(16.dp))
+            // Contenido expandible principal (controlado por isExpanded)
+            AnimatedVisibility(visible = isExpanded) {
+                Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
                     HorizontalDivider()
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    val subRespuestas = itemState.actividad.posiblesRespuestas.filter {
-                        it.esParaRespuestaAfirmativa == itemState.decisionSiNo
+                    // Botones "Sí" y "No"
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { onSiNoDecision(true) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (itemState.decisionSiNo == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) { Text("SÍ") }
+
+                        Button(
+                            onClick = { onSiNoDecision(false) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (itemState.decisionSiNo == false) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) { Text("NO") }
                     }
 
-                    subRespuestas.forEach { respuesta ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .selectable(
-                                    selected = (itemState.subRespuestaSeleccionada?.id == respuesta.id && itemState.subRespuestaSeleccionada.actividadId == respuesta.actividadId),
-                                    onClick = { onSubRespuestaSelected(respuesta) },
-                                    role = Role.RadioButton,
-                                    // --- LA SOLUCIÓN DEFINITIVA ---
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null // Desactiva el ripple problemático
-                                )
-                                .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = (itemState.subRespuestaSeleccionada?.id == respuesta.id && itemState.subRespuestaSeleccionada.actividadId == respuesta.actividadId),
-                                onClick = { onSubRespuestaSelected(respuesta) }
-                            )
-                            Text(text = respuesta.label, modifier = Modifier.padding(start = 8.dp))
+                    // Sub-contenido para las respuestas (controlado por decisionSiNo)
+                    AnimatedVisibility(visible = itemState.decisionSiNo != null) {
+                        Column {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            HorizontalDivider()
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            val subRespuestas = itemState.actividad.posiblesRespuestas.filter {
+                                it.esParaRespuestaAfirmativa == itemState.decisionSiNo
+                            }
+
+                            subRespuestas.forEach { respuesta ->
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .selectable(
+                                            selected = (itemState.subRespuestaSeleccionada?.id == respuesta.id && itemState.subRespuestaSeleccionada.actividadId == respuesta.actividadId),
+                                            onClick = { onSubRespuestaSelected(respuesta) },
+                                            role = Role.RadioButton,
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null
+                                        )
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(
+                                        selected = (itemState.subRespuestaSeleccionada?.id == respuesta.id && itemState.subRespuestaSeleccionada.actividadId == respuesta.actividadId),
+                                        onClick = { onSubRespuestaSelected(respuesta) }
+                                    )
+                                    Text(text = respuesta.label, modifier = Modifier.padding(start = 8.dp))
+                                }
+                            }
                         }
                     }
-                }
-            }
 
-            AnimatedVisibility(visible = itemState.subRespuestaSeleccionada?.value == "otros") {
-                OutlinedTextField(
-                    value = itemState.textoOtros,
-                    onValueChange = onOtrosTextChanged,
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    label = { Text("Por favor, especifique...") }
-                )
+                    // Sub-contenido para el campo "Otros"
+                    AnimatedVisibility(visible = itemState.subRespuestaSeleccionada?.value == "otros") {
+                        OutlinedTextField(
+                            value = itemState.textoOtros,
+                            onValueChange = onOtrosTextChanged,
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            label = { Text("Por favor, especifique...") }
+                        )
+                    }
+                }
             }
         }
     }
 }
-// --- FIN DEL COMPOSABLE ChecklistItem RECONSTRUIDO ---

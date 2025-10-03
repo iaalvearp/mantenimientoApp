@@ -16,7 +16,7 @@
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
             { "id": 2, "label": "El  lugar del equipo se encontraba limpio y todo en orden", "value": "lugar_limpio" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -34,7 +34,7 @@
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
             { "id": 2, "label": "Equipo con errores", "value": "equipo_con_errores" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -53,7 +53,7 @@
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
             { "id": 2, "label": "No se presentaron inconvenientes", "value": "no_inconvenientes" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -71,7 +71,7 @@
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
             { "id": 2, "label": "Se debe gestionar retiro del equipo", "value": "gestionar_retiro" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -89,7 +89,7 @@
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
             { "id": 2, "label": "Los cables estaban ordenados", "value": "cables_ordenados" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -108,7 +108,7 @@
           ],
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -126,7 +126,7 @@
           ],
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -144,7 +144,7 @@
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
             { "id": 2, "label": "Equipo sin espacio de almacenamiento", "value": "equipo_sin_almacenamiento" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -164,7 +164,7 @@
           ],
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -181,7 +181,7 @@
           ],
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -198,7 +198,7 @@
           ],
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -215,7 +215,7 @@
           ],
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -232,7 +232,7 @@
           ],
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -249,7 +249,7 @@
           ],
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -266,7 +266,7 @@
           ],
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
@@ -283,7 +283,7 @@
           ],
           "answerNo": [
             { "id": 1, "label": "Equipo no se encontraba", "value": "equipo_no_encontrado" },
-            { "id": 99, "label": "Otros", "value": "otros" }
+            { "id": 98, "label": "Otros", "value": "otros" }
           ]
         }
       ]
