@@ -57,23 +57,20 @@ class MainActivity : ComponentActivity() {
             val dao = AppDatabase.getDatabase(applicationContext).appDao()
             val gson = Gson()
 
-            // --- 1. LEEMOS EL "CATASTRO" (database.json) ---
+            // --- 1 y 2: Carga de database.json y tareas.json (SIN CAMBIOS) ---
+            // (Todo el código anterior para cargar usuarios, equipos, tareas, etc., se mantiene igual)
             val dbStream = assets.open("database.json")
             val dbData: DatabaseJsonData = gson.fromJson(InputStreamReader(dbStream), DatabaseJsonData::class.java)
-
-            // Insertamos datos maestros
             dbData.roles.forEach { dao.insertarRol(it) }
             dbData.usuarios.forEach { dao.insertarUsuario(it) }
             dbData.estados.forEach { dao.insertarEstado(it) }
             dbData.unidadesNegocio.forEach { dao.insertarUnidadNegocio(it) }
-
             dbData.clientes.forEach { clienteJson ->
                 dao.insertarCliente(Cliente(clienteJson.id, clienteJson.nombre, clienteJson.nombreCompleto))
                 clienteJson.proyectos.forEach { proyectoJson ->
                     dao.insertarProyecto(Proyecto(proyectoJson.id, proyectoJson.nombre, clienteJson.id))
                 }
             }
-
             dbData.ubicacion.forEach { ubiJson ->
                 dao.insertarProvincia(Provincia(ubiJson.id, ubiJson.provincia))
                 ubiJson.ciudades.forEach { ciudadJson ->
@@ -83,54 +80,118 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-
-            // Insertamos TODOS los equipos del "catastro" en la tabla de equipos
             dbData.tiposEquipos.forEach { tipoEquipo ->
                 tipoEquipo.equipos.forEach { equipoJson ->
                     dao.insertarEquipo(
                         Equipo(
-                            id = equipoJson.id,
-                            nombre = equipoJson.nombre,
-                            modelo = equipoJson.modelo,
-                            caracteristicas = equipoJson.caracteristicas,
-                            estadoId = 1,
-                            tareaId = 0,
-                            creadoPorUsuarioId = null
+                            id = equipoJson.id, nombre = equipoJson.nombre, modelo = equipoJson.modelo,
+                            caracteristicas = equipoJson.caracteristicas, estadoId = 1, tareaId = 0, creadoPorUsuarioId = null
                         )
                     )
                 }
             }
-
-            // --- 2. LEEMOS LA "LISTA DE TRABAJO" (tareas.json) ---
             val tareasStream = assets.open("tareas.json")
             val tareaListType = object : TypeToken<List<TareaAsignadaJson>>() {}.type
             val tareasAsignadasJson: List<TareaAsignadaJson> = gson.fromJson(InputStreamReader(tareasStream), tareaListType)
-
-            // Creamos un mapa para encontrar los datos administrativos de un equipo rápidamente
             val equipoAdminDataMap = dbData.tiposEquipos.flatMap { grupo ->
                 grupo.equipos.map { equipo -> equipo.id to grupo }
             }.toMap()
-
             tareasAsignadasJson.forEach { tareaJson ->
                 val adminData = equipoAdminDataMap[tareaJson.idEquipo]
                 if (adminData != null) {
                     val nuevaTarea = Tarea(
-                        id = tareaJson.id,
-                        usuarioId = tareaJson.usuarioId,
-                        clienteId = adminData.clienteId,
-                        proyectoId = adminData.proyectoId,
-                        provinciaId = adminData.provinciaId,
-                        ciudadId = adminData.ciudadId,
-                        unidadNegocioId = adminData.unidadNegocioId,
-                        agenciaId = adminData.agenciaId
+                        id = tareaJson.id, usuarioId = tareaJson.usuarioId, clienteId = adminData.clienteId,
+                        proyectoId = adminData.proyectoId, provinciaId = adminData.provinciaId,
+                        ciudadId = adminData.ciudadId, unidadNegocioId = adminData.unidadNegocioId, agenciaId = adminData.agenciaId
                     )
                     dao.insertarTarea(nuevaTarea)
                     dao.vincularEquipoConTarea(equipoId = tareaJson.idEquipo, tareaId = nuevaTarea.id)
                 }
             }
 
-            // --- 3. CARGA DE ACTIVIDADES --- (Sin cambios, asumiendo que el archivo existe y es correcto)
-            // ...
+            // --- 3. CARGA DE ACTIVIDADES DE MANTENIMIENTO (LÓGICA ACTUALIZADA) ---
+            val actividadesStream = assets.open("actividadesMantenimiento.json")
+            val actividadesData: ActividadesJsonData = gson.fromJson(InputStreamReader(actividadesStream), ActividadesJsonData::class.java)
+
+            suspend fun procesarActividades(lista: List<ActividadJson>, tipo: String) {
+                lista.forEach { actJson ->
+                    // Insertamos la actividad principal (sin cambios aquí)
+                    dao.insertarActividadMantenimiento(
+                        ActividadMantenimiento(
+                            id = actJson.id,
+                            nombre = actJson.nombre,
+                            tipo = tipo,
+                            tipoSeleccion = actJson.tipoSeleccion
+                        )
+                    )
+
+                    // --- INICIO DE LA LÓGICA ACTUALIZADA ---
+                    // Extraemos el primer (y único) objeto de posiblesRespuestas
+                    val respuestasAnidadas = actJson.posiblesRespuestas.firstOrNull()
+
+                    // Procesamos la lista de respuestas para "Sí"
+                    respuestasAnidadas?.answerYes?.forEach { respJson ->
+                        dao.insertarPosibleRespuesta(
+                            PosibleRespuesta(
+                                id = respJson.id,
+                                label = respJson.label,
+                                value = respJson.value,
+                                actividadId = actJson.id,
+                                esParaRespuestaAfirmativa = true // <-- Marcamos como respuesta de "Sí"
+                            )
+                        )
+                    }
+
+                    // Procesamos la lista de respuestas para "No"
+                    respuestasAnidadas?.answerNo?.forEach { respJson ->
+                        dao.insertarPosibleRespuesta(
+                            PosibleRespuesta(
+                                id = respJson.id,
+                                label = respJson.label,
+                                value = respJson.value,
+                                actividadId = actJson.id,
+                                esParaRespuestaAfirmativa = false // <-- Marcamos como respuesta de "No"
+                            )
+                        )
+                    }
+                    // --- FIN DE LA LÓGICA ACTUALIZADA ---
+                }
+            }
+
+            // La llamada a la función se mantiene, pero ahora procesará el JSON anidado
+            procesarActividades(actividadesData.actividadesPreventivo, "preventivo")
+            procesarActividades(actividadesData.actividadesCorrectivo, "correctivo")
+
+            // NOTA: La sección de diagnóstico tiene una estructura diferente en el JSON.
+            // La adaptamos para que siga funcionando.
+            actividadesData.actividadesDiagnostico.forEach { actJson ->
+                dao.insertarActividadMantenimiento(
+                    ActividadMantenimiento(
+                        id = actJson.id,
+                        nombre = actJson.nombre,
+                        tipo = "diagnostico",
+                        tipoSeleccion = actJson.tipoSeleccion
+                    )
+                )
+                // La estructura de respuestas de diagnóstico es plana, la procesamos como antes
+                actJson.posiblesRespuestas.forEach { respAnidadas ->
+                    // Como diagnóstico no tiene "answerYes/No", asumimos que todas son "Sí"
+                    // y procesamos la primera lista que encontremos (usando un truco con 'let')
+                    (respAnidadas as? List<RespuestaJson>)?.let { respuestasPlanas ->
+                        respuestasPlanas.forEach { respJson ->
+                            dao.insertarPosibleRespuesta(
+                                PosibleRespuesta(
+                                    id = respJson.id,
+                                    label = respJson.label,
+                                    value = respJson.value,
+                                    actividadId = actJson.id,
+                                    esParaRespuestaAfirmativa = true
+                                )
+                            )
+                        }
+                    }
+                }
+            }
 
             prefs.edit { putBoolean("is_first_run", false) }
         }
@@ -156,6 +217,32 @@ class MainActivity : ComponentActivity() {
         val ubicacion: List<UbicacionJson>,
         val tiposEquipos: List<TipoEquipoJson>,
         val estados: List<Estado>
+    )
+
+    // Representa una sola respuesta posible dentro de las listas answerYes/answerNo
+    private data class RespuestaJson(val id: Int, val label: String, val value: String)
+
+    // Representa el objeto que contiene las listas de respuestas para Sí y No
+    private data class PosiblesRespuestasJson(
+        val answerYes: List<RespuestaJson>,
+        val answerNo: List<RespuestaJson>
+    )
+
+    // Representa una sola actividad dentro del JSON, ahora adaptada a la nueva estructura
+    private data class ActividadJson(
+        val id: Int,
+        val nombre: String,
+        @com.google.gson.annotations.SerializedName("type")
+        val tipoSeleccion: String,
+        val posiblesRespuestas: List<PosiblesRespuestasJson> // <-- CAMBIO IMPORTANTE AQUÍ
+    )
+
+    // Representa la estructura completa del archivo actividadesMantenimiento.json
+    private data class ActividadesJsonData(
+        val actividadesPreventivo: List<ActividadJson>,
+        val actividadesCorrectivo: List<ActividadJson>,
+        @com.google.gson.annotations.SerializedName("tareasDiagnostico")
+        val actividadesDiagnostico: List<ActividadJson>
     )
 }
 

@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.androidx.room.external.antlr)
+    implementation(libs.androidx.compose.foundation)
     ksp(libs.room.compiler)
 
     // Gson

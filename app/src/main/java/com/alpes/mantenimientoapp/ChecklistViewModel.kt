@@ -1,5 +1,7 @@
+// Archivo: ChecklistViewModel.kt (COMPLETAMENTE ACTUALIZADO)
 package com.alpes.mantenimientoapp
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -7,19 +9,22 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// Representa el estado de un solo item en la checklist
+// --- CAMBIO: La nueva estructura para el estado de CADA item del checklist ---
 data class ChecklistItemState(
     val actividad: ActividadConRespuestas,
-    val respuestasSeleccionadas: Set<PosibleRespuesta> = emptySet(), // Nombre corregido a plural
-    val observacion: String = ""
+    // Guarda la decisión inicial del técnico: null (sin responder), true (Sí), false (No)
+    val decisionSiNo: Boolean? = null,
+    // Guarda la sub-respuesta detallada que el técnico elige
+    val subRespuestaSeleccionada: PosibleRespuesta? = null,
+    // Guarda el texto personalizado si la respuesta es "Otros"
+    val textoOtros: String = ""
 )
 
-// Estado de la UI para toda la pantalla
+// --- CAMBIO: El estado general de la UI ahora usa la nueva estructura de items ---
 data class ChecklistUiState(
     val items: List<ChecklistItemState> = emptyList(),
     val tipo: String = "",
     val observacionGeneral: String = "",
-    // --- LÍNEAS AÑADIDAS ---
     val versionFirmwareActual: String = "",
     val versionFirmwareDespues: String = ""
 )
@@ -37,110 +42,26 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
             val actividades = dao.obtenerActividadesConRespuestas(tipo)
             _uiState.update {
                 it.copy(
-                    items = actividades.map { actividad ->
-                        val defaultResponse = if (tipo != "diagnostico") {
-                            actividad.posiblesRespuestas.find { pr -> pr.label.equals("No fue necesario", ignoreCase = true) }
-                        } else null
-                        ChecklistItemState(
-                            actividad = actividad,
-                            respuestasSeleccionadas = if(defaultResponse != null) setOf(defaultResponse) else emptySet() // Lógica corregida
-                        )
-                    },
+                    // Al cargar, simplemente mapeamos las actividades a nuestro nuevo estado inicial
+                    items = actividades.map { actividad -> ChecklistItemState(actividad = actividad) },
                     tipo = tipo,
-                    observacionGeneral = ""
+                    // Reseteamos los demás campos
+                    observacionGeneral = "",
+                    versionFirmwareActual = "",
+                    versionFirmwareDespues = ""
                 )
             }
         }
     }
 
-    // NUEVA LÓGICA DE SELECCIÓN (ahora maneja radio y checkbox)
-    fun onResponseSelected(actividadId: Int, respuesta: PosibleRespuesta) { // Ya no necesitamos 'esSeleccionMultiple' aquí
-        _uiState.update { currentState ->
-            val esMultiple = currentState.items
-                .find { it.actividad.actividad.id == actividadId }
-                ?.actividad?.actividad?.tipoSeleccion == "multiple_choice"
-
-            currentState.copy(
-                items = currentState.items.map { item ->
-                    if (item.actividad.actividad.id == actividadId) {
-                        val nuevasRespuestas = if (esMultiple) {
-                            if (item.respuestasSeleccionadas.contains(respuesta)) item.respuestasSeleccionadas - respuesta
-                            else item.respuestasSeleccionadas + respuesta
-                        } else setOf(respuesta)
-                        item.copy(respuestasSeleccionadas = nuevasRespuestas) // Lógica corregida
-                    } else item
-                }
-            )
-        }
-    }
-
-    // NUEVO: Para actualizar la observación general
-    fun onGeneralObservationChanged(texto: String) {
-        _uiState.update { it.copy(observacionGeneral = texto) }
-    }
-
-    fun saveChecklist(equipoId: String) {
-        viewModelScope.launch {
-            // Guardar respuestas de cada item
-            val currentState = _uiState.value
-            _uiState.value.items.forEach { itemState ->
-                itemState.respuestasSeleccionadas.forEach { respuesta ->
-                    val resultado = MantenimientoResultado(
-                        equipoId = equipoId,
-                        actividadId = itemState.actividad.actividad.id,
-                        respuestaValue = respuesta.value,
-                        observacion = itemState.observacion
-                    )
-                    dao.insertarResultado(resultado)
-                    dao.updateEquipoStatus(equipoId = equipoId, newStatusId = 2)
-                }
-            }
-            // Guardar observación general
-            if (_uiState.value.observacionGeneral.isNotBlank()) {
-                val obsResultado = MantenimientoResultado(
-                    equipoId = equipoId,
-                    actividadId = -1, // ID especial para la observación general
-                    respuestaValue = _uiState.value.tipo, // Guardamos el tipo de checklist aquí
-                    observacion = _uiState.value.observacionGeneral
-                )
-                dao.insertarResultado(obsResultado)
-            }
-            // --- INICIO DEL NUEVO BLOQUE DE CÓDIGO ---
-            // Guardar versiones de firmware si no están vacías
-            if (currentState.versionFirmwareActual.isNotBlank()) {
-                val firmwareActualResultado = MantenimientoResultado(
-                    equipoId = equipoId,
-                    actividadId = -2, // ID especial para "Firmware Actual"
-                    respuestaValue = currentState.tipo,
-                    observacion = currentState.versionFirmwareActual
-                )
-                dao.insertarResultado(firmwareActualResultado)
-            }
-
-            if (currentState.versionFirmwareDespues.isNotBlank()) {
-                val firmwareDespuesResultado = MantenimientoResultado(
-                    equipoId = equipoId,
-                    actividadId = -3, // ID especial para "Firmware Después"
-                    respuestaValue = currentState.tipo,
-                    observacion = currentState.versionFirmwareDespues
-                )
-                dao.insertarResultado(firmwareDespuesResultado)
-            }
-
-            _showSaveConfirmation.value = true
-        }
-    }
-
-    fun dismissSaveConfirmation() {
-        _showSaveConfirmation.value = false
-    }
-
-    fun onObservationChanged(actividadId: Int, texto: String) {
+    // --- NUEVA FUNCIÓN: Se activa cuando el usuario presiona "Sí" o "No" ---
+    fun onSiNoDecision(actividadId: Int, decision: Boolean) {
         _uiState.update { currentState ->
             currentState.copy(
                 items = currentState.items.map { item ->
                     if (item.actividad.actividad.id == actividadId) {
-                        item.copy(observacion = texto)
+                        // Actualizamos la decisión y reseteamos cualquier sub-respuesta anterior
+                        item.copy(decisionSiNo = decision, subRespuestaSeleccionada = null, textoOtros = "")
                     } else {
                         item
                     }
@@ -149,11 +70,122 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
         }
     }
 
-    fun onVersionActualChanged(version: String) {
-        _uiState.update { it.copy(versionFirmwareActual = version) }
+    // --- NUEVA FUNCIÓN: Se activa cuando el usuario elige una sub-respuesta de la lista ---
+    fun onSubRespuestaSelected(actividadId: Int, subRespuesta: PosibleRespuesta) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                items = currentState.items.map { item ->
+                    if (item.actividad.actividad.id == actividadId) {
+                        item.copy(subRespuestaSeleccionada = subRespuesta)
+                    } else {
+                        item
+                    }
+                }
+            )
+        }
     }
 
-    fun onVersionDespuesChanged(version: String) {
-        _uiState.update { it.copy(versionFirmwareDespues = version) }
+    // --- NUEVA FUNCIÓN: Se activa cuando el usuario escribe en el campo "Otros" ---
+    fun onOtrosTextChanged(actividadId: Int, texto: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                items = currentState.items.map { item ->
+                    if (item.actividad.actividad.id == actividadId) {
+                        item.copy(textoOtros = texto)
+                    } else {
+                        item
+                    }
+                }
+            )
+        }
+    }
+
+    fun onGeneralObservationChanged(texto: String) {
+        _uiState.update { it.copy(observacionGeneral = texto) }
+    }
+
+    // --- LÓGICA DE GUARDADO COMPLETAMENTE REESCRITA ---
+    fun saveChecklist(equipoId: String) {
+        viewModelScope.launch {
+            val currentState = _uiState.value
+
+            currentState.items.forEach { itemState ->
+                // Solo guardamos algo si el usuario ha tomado al menos la decisión de Sí/No
+                if (itemState.decisionSiNo != null) {
+                    val esOtro = itemState.subRespuestaSeleccionada?.value == "otros"
+
+                    val resultado = MantenimientoResultado(
+                        equipoId = equipoId,
+                        actividadId = itemState.actividad.actividad.id,
+                        // Guardamos "si" o "no" para tu futuro formulario
+                        decisionSiNo = if (itemState.decisionSiNo) "si" else "no",
+                        // Si es "Otros", guardamos null aquí para no guardar "otros" como valor
+                        respuestaValue = if (!esOtro) itemState.subRespuestaSeleccionada?.value else null,
+                        // Si es "Otros", la observación es el texto del usuario. Si no, es la etiqueta de la opción.
+                        observacion = if (esOtro) itemState.textoOtros else itemState.subRespuestaSeleccionada?.label ?: ""
+                    )
+                    dao.insertarResultado(resultado)
+                }
+            }
+
+            // Lógica para guardar la observación general y firmware (sin cambios)
+            if (currentState.observacionGeneral.isNotBlank()) {
+                val obsResultado = MantenimientoResultado(
+                    equipoId = equipoId, actividadId = -1, decisionSiNo = null,
+                    respuestaValue = currentState.tipo, observacion = currentState.observacionGeneral
+                )
+                dao.insertarResultado(obsResultado)
+            }
+            if (currentState.versionFirmwareActual.isNotBlank()) {
+                val firmwareActualResultado = MantenimientoResultado(
+                    equipoId = equipoId, actividadId = -2, decisionSiNo = null,
+                    respuestaValue = currentState.tipo, observacion = currentState.versionFirmwareActual
+                )
+                dao.insertarResultado(firmwareActualResultado)
+            }
+            if (currentState.versionFirmwareDespues.isNotBlank()) {
+                val firmwareDespuesResultado = MantenimientoResultado(
+                    equipoId = equipoId, actividadId = -3, decisionSiNo = null,
+                    respuestaValue = currentState.tipo, observacion = currentState.versionFirmwareDespues
+                )
+                dao.insertarResultado(firmwareDespuesResultado)
+            }
+
+            // Actualizamos el estado del equipo a "en progreso"
+            dao.updateEquipoStatus(equipoId = equipoId, newStatusId = 2)
+            _showSaveConfirmation.value = true
+        }
+    }
+
+    fun dismissSaveConfirmation() {
+        _showSaveConfirmation.value = false
+    }
+
+    // Funciones de versión de firmware (sin cambios)
+    fun onVersionActualChanged(version: String) { _uiState.update { it.copy(versionFirmwareActual = version) } }
+    fun onVersionDespuesChanged(version: String) { _uiState.update { it.copy(versionFirmwareDespues = version) } }
+
+    // Estas funciones ya no se usan para el nuevo flujo, pero las mantenemos por si Diagnóstico las necesita
+    fun onResponseSelected(actividadId: Int, respuesta: PosibleRespuesta) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                items = currentState.items.map { item ->
+                    if (item.actividad.actividad.id == actividadId) {
+                        item.copy(subRespuestaSeleccionada = respuesta)
+                    } else item
+                }
+            )
+        }
+    }
+    fun onObservationChanged(actividadId: Int, texto: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                items = currentState.items.map { item ->
+                    if (item.actividad.actividad.id == actividadId) {
+                        item.copy(textoOtros = texto)
+                    } else item
+                }
+            )
+        }
     }
 }

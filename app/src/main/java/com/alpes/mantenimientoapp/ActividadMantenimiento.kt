@@ -1,13 +1,13 @@
-// Archivo: ActividadMantenimiento.kt
+// Archivo: ActividadMantenimiento.kt (CORREGIDO)
 package com.alpes.mantenimientoapp
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 
-@Entity(tableName = "actividades_mantenimiento")
+// --- CAMBIO CLAVE: Usamos una clave primaria compuesta ---
+@Entity(tableName = "actividades_mantenimiento", primaryKeys = ["id", "tipo"])
 data class ActividadMantenimiento(
-    @PrimaryKey val id: Int,
+    val id: Int,
     val nombre: String,
     val tipo: String,
-    val tipoSeleccion: String // <-- Asegúrate de que esta línea exista
+    val tipoSeleccion: String
 )

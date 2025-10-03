@@ -1,13 +1,16 @@
-// Archivo: PosibleRespuesta.kt
+// Archivo: PosibleRespuesta.kt (CORREGIDO)
 package com.alpes.mantenimientoapp
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 
-@Entity(tableName = "posibles_respuestas")
+// Mantenemos la clave primaria compuesta que ya solucionó el bug anterior
+@Entity(tableName = "posibles_respuestas", primaryKeys = ["id", "actividadId"])
 data class PosibleRespuesta(
-    @PrimaryKey val id: Int,
+    val id: Int,
     val label: String,
     val value: String,
-    val actividadId: Int // <-- AÑADE ESTO
+    val actividadId: Int,
+    // --- NUEVA COLUMNA ---
+    // Guardará 'true' si es una respuesta para "Sí" y 'false' si es para "No"
+    val esParaRespuestaAfirmativa: Boolean
 )
