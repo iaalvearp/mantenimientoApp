@@ -115,8 +115,8 @@ class MainActivity : ComponentActivity() {
 
             suspend fun procesarActividades(lista: List<ActividadJson>, tipo: String) {
                 lista.forEach { actJson ->
-                    // Insertamos la actividad principal (sin cambios aquí)
-                    dao.insertarActividadMantenimiento(
+                    // Insertamos la actividad principal y OBTENEMOS SU ID ÚNICO
+                    val nuevoActividadDbId = dao.insertarActividadMantenimiento(
                         ActividadMantenimiento(
                             id = actJson.id,
                             nombre = actJson.nombre,
@@ -125,36 +125,33 @@ class MainActivity : ComponentActivity() {
                         )
                     )
 
-                    // --- INICIO DE LA LÓGICA ACTUALIZADA ---
-                    // Extraemos el primer (y único) objeto de posiblesRespuestas
                     val respuestasAnidadas = actJson.posiblesRespuestas.firstOrNull()
 
-                    // Procesamos la lista de respuestas para "Sí"
                     respuestasAnidadas?.answerYes?.forEach { respJson ->
                         dao.insertarPosibleRespuesta(
                             PosibleRespuesta(
                                 id = respJson.id,
                                 label = respJson.label,
                                 value = respJson.value,
-                                actividadId = actJson.id,
-                                esParaRespuestaAfirmativa = true // <-- Marcamos como respuesta de "Sí"
+                                // --- CAMBIO CLAVE: Usamos el ID único que nos devolvió la DB ---
+                                actividadId = nuevoActividadDbId.toInt(),
+                                esParaRespuestaAfirmativa = true
                             )
                         )
                     }
 
-                    // Procesamos la lista de respuestas para "No"
                     respuestasAnidadas?.answerNo?.forEach { respJson ->
                         dao.insertarPosibleRespuesta(
                             PosibleRespuesta(
                                 id = respJson.id,
                                 label = respJson.label,
                                 value = respJson.value,
-                                actividadId = actJson.id,
-                                esParaRespuestaAfirmativa = false // <-- Marcamos como respuesta de "No"
+                                // --- CAMBIO CLAVE: Usamos el ID único que nos devolvió la DB ---
+                                actividadId = nuevoActividadDbId.toInt(),
+                                esParaRespuestaAfirmativa = false
                             )
                         )
                     }
-                    // --- FIN DE LA LÓGICA ACTUALIZADA ---
                 }
             }
 

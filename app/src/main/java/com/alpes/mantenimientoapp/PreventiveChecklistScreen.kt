@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -141,18 +142,21 @@ fun ChecklistItem(
     onSubRespuestaSelected: (PosibleRespuesta) -> Unit,
     onOtrosTextChanged: (String) -> Unit
 ) {
+    // --- NUEVO: Definimos los colores para reutilizarlos ---
+    val colorNaranja = Color(0xFFF57C00)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column { // Columna principal de la tarjeta
+        Column {
             // Fila del Título (con el clickable corregido)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = null, // <-- ¡LA CORRECCIÓN FINAL!
+                        indication = null,
                         onClick = onExpand
                     )
                     .padding(16.dp),
@@ -170,13 +174,13 @@ fun ChecklistItem(
                 )
             }
 
-            // Contenido expandible principal (controlado por isExpanded)
+            // Contenido expandible
             AnimatedVisibility(visible = isExpanded) {
                 Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
                     HorizontalDivider()
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Botones "Sí" y "No"
+                    // --- Botones "Sí" y "No" CON COLORES ACTUALIZADOS ---
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -186,7 +190,8 @@ fun ChecklistItem(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (itemState.decisionSiNo == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                                containerColor = if (itemState.decisionSiNo == true) colorNaranja else MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = if (itemState.decisionSiNo == true) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         ) { Text("SÍ") }
 
@@ -195,12 +200,13 @@ fun ChecklistItem(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (itemState.decisionSiNo == false) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                                containerColor = if (itemState.decisionSiNo == false) colorNaranja else MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = if (itemState.decisionSiNo == false) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         ) { Text("NO") }
                     }
 
-                    // Sub-contenido para las respuestas (controlado por decisionSiNo)
+                    // El resto del código no cambia...
                     AnimatedVisibility(visible = itemState.decisionSiNo != null) {
                         Column {
                             Spacer(modifier = Modifier.height(16.dp))
@@ -216,7 +222,7 @@ fun ChecklistItem(
                                     Modifier
                                         .fillMaxWidth()
                                         .selectable(
-                                            selected = (itemState.subRespuestaSeleccionada?.id == respuesta.id && itemState.subRespuestaSeleccionada.actividadId == respuesta.actividadId),
+                                            selected = (itemState.subRespuestaSeleccionada?.dbId == respuesta.dbId),
                                             onClick = { onSubRespuestaSelected(respuesta) },
                                             role = Role.RadioButton,
                                             interactionSource = remember { MutableInteractionSource() },
@@ -226,7 +232,7 @@ fun ChecklistItem(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     RadioButton(
-                                        selected = (itemState.subRespuestaSeleccionada?.id == respuesta.id && itemState.subRespuestaSeleccionada.actividadId == respuesta.actividadId),
+                                        selected = (itemState.subRespuestaSeleccionada?.dbId == respuesta.dbId),
                                         onClick = { onSubRespuestaSelected(respuesta) }
                                     )
                                     Text(text = respuesta.label, modifier = Modifier.padding(start = 8.dp))
@@ -234,8 +240,6 @@ fun ChecklistItem(
                             }
                         }
                     }
-
-                    // Sub-contenido para el campo "Otros"
                     AnimatedVisibility(visible = itemState.subRespuestaSeleccionada?.value == "otros") {
                         OutlinedTextField(
                             value = itemState.textoOtros,

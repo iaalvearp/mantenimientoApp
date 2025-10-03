@@ -10,7 +10,7 @@ interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertarCliente(cliente: Cliente)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertarProyecto(proyecto: Proyecto)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertarProvincia(provincia: Provincia)
-    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertarActividadMantenimiento(actividad: ActividadMantenimiento)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertarActividadMantenimiento(actividad: ActividadMantenimiento): Long
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertarPosibleRespuesta(respuesta: PosibleRespuesta)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertarRol(rol: Rol)
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertarUnidadNegocio(unidadNegocio: UnidadNegocio)

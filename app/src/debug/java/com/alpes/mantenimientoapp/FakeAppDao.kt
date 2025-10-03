@@ -13,7 +13,7 @@ class FakeAppDao : AppDao {
     override suspend fun insertarCliente(cliente: Cliente) {}
     override suspend fun insertarProyecto(proyecto: Proyecto) {}
     override suspend fun insertarProvincia(provincia: Provincia) {}
-    override suspend fun insertarActividadMantenimiento(actividad: ActividadMantenimiento) {}
+    override suspend fun insertarActividadMantenimiento(actividad: ActividadMantenimiento): Long = 0L
     override suspend fun insertarPosibleRespuesta(respuesta: PosibleRespuesta) {}
     override suspend fun insertarRol(rol: Rol) {}
     override suspend fun insertarUnidadNegocio(unidadNegocio: UnidadNegocio) {}
