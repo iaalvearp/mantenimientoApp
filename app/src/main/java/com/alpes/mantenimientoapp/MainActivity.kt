@@ -113,9 +113,9 @@ class MainActivity : ComponentActivity() {
             val actividadesStream = assets.open("actividadesMantenimiento.json")
             val actividadesData: ActividadesJsonData = gson.fromJson(InputStreamReader(actividadesStream), ActividadesJsonData::class.java)
 
+            // Esta función ahora funciona para los TRES tipos por igual
             suspend fun procesarActividades(lista: List<ActividadJson>, tipo: String) {
                 lista.forEach { actJson ->
-                    // Insertamos la actividad principal y OBTENEMOS SU ID ÚNICO
                     val nuevoActividadDbId = dao.insertarActividadMantenimiento(
                         ActividadMantenimiento(
                             id = actJson.id,
@@ -133,7 +133,6 @@ class MainActivity : ComponentActivity() {
                                 id = respJson.id,
                                 label = respJson.label,
                                 value = respJson.value,
-                                // --- CAMBIO CLAVE: Usamos el ID único que nos devolvió la DB ---
                                 actividadId = nuevoActividadDbId.toInt(),
                                 esParaRespuestaAfirmativa = true
                             )
@@ -146,7 +145,6 @@ class MainActivity : ComponentActivity() {
                                 id = respJson.id,
                                 label = respJson.label,
                                 value = respJson.value,
-                                // --- CAMBIO CLAVE: Usamos el ID único que nos devolvió la DB ---
                                 actividadId = nuevoActividadDbId.toInt(),
                                 esParaRespuestaAfirmativa = false
                             )
@@ -158,37 +156,7 @@ class MainActivity : ComponentActivity() {
             // La llamada a la función se mantiene, pero ahora procesará el JSON anidado
             procesarActividades(actividadesData.actividadesPreventivo, "preventivo")
             procesarActividades(actividadesData.actividadesCorrectivo, "correctivo")
-
-            // NOTA: La sección de diagnóstico tiene una estructura diferente en el JSON.
-            // La adaptamos para que siga funcionando.
-            actividadesData.actividadesDiagnostico.forEach { actJson ->
-                dao.insertarActividadMantenimiento(
-                    ActividadMantenimiento(
-                        id = actJson.id,
-                        nombre = actJson.nombre,
-                        tipo = "diagnostico",
-                        tipoSeleccion = actJson.tipoSeleccion
-                    )
-                )
-                // La estructura de respuestas de diagnóstico es plana, la procesamos como antes
-                actJson.posiblesRespuestas.forEach { respAnidadas ->
-                    // Como diagnóstico no tiene "answerYes/No", asumimos que todas son "Sí"
-                    // y procesamos la primera lista que encontremos (usando un truco con 'let')
-                    (respAnidadas as? List<RespuestaJson>)?.let { respuestasPlanas ->
-                        respuestasPlanas.forEach { respJson ->
-                            dao.insertarPosibleRespuesta(
-                                PosibleRespuesta(
-                                    id = respJson.id,
-                                    label = respJson.label,
-                                    value = respJson.value,
-                                    actividadId = actJson.id,
-                                    esParaRespuestaAfirmativa = true
-                                )
-                            )
-                        }
-                    }
-                }
-            }
+            procesarActividades(actividadesData.actividadesDiagnostico, "diagnostico")
 
             prefs.edit { putBoolean("is_first_run", false) }
         }

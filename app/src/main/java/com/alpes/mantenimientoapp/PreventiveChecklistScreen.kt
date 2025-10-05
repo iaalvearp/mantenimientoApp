@@ -1,4 +1,3 @@
-// Archivo: PreventiveChecklistScreen.kt (COMPLETAMENTE RECONSTRUIDO)
 package com.alpes.mantenimientoapp
 
 
@@ -21,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -35,7 +35,7 @@ fun PreventiveChecklistScreen(
 )  {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val showDialog by viewModel.showSaveConfirmation.collectAsStateWithLifecycle()
-    // --- NUEVO: Estado para controlar qué item está expandido (acordeón) ---
+
     var expandedItemId by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(key1 = checklistType) {
@@ -64,13 +64,33 @@ fun PreventiveChecklistScreen(
                 .fillMaxSize()
                 .padding(paddingValues),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp) // Un poco más de espacio
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Lógica para el Firmware en Diagnóstico (sin cambios)
+            // --- DIAGNÓSTICO: Nueva sección para el Firmware ---
             if (checklistType == "diagnostico") {
                 item {
                     Column {
-                        // ... (código de firmware se mantiene)
+                        Text(
+                            "ESTADO DEL FIRMWARE DEL EQUIPO",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        OutlinedTextField(
+                            value = uiState.versionFirmwareActual,
+                            onValueChange = { viewModel.onVersionActualChanged(it) },
+                            label = { Text("Versión actual de Firmware / Parche") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = uiState.versionFirmwareDespues,
+                            onValueChange = { viewModel.onVersionDespuesChanged(it) },
+                            label = { Text("Versión después de actualización") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider()
                     }
                 }
             }
@@ -80,21 +100,16 @@ fun PreventiveChecklistScreen(
                 val actividadId = itemState.actividad.actividad.id
                 ChecklistItem(
                     itemState = itemState,
-                    // --- NUEVOS PARÁMETROS PARA EL ACORDEÓN ---
                     isExpanded = expandedItemId == actividadId,
                     onExpand = {
                         expandedItemId = if (expandedItemId == actividadId) null else actividadId
                     },
-                    // --- El resto de parámetros se mantienen ---
-                    onSiNoDecision = { decision ->
-                        viewModel.onSiNoDecision(actividadId, decision)
-                    },
-                    onSubRespuestaSelected = { subRespuesta ->
-                        viewModel.onSubRespuestaSelected(actividadId, subRespuesta)
-                    },
-                    onOtrosTextChanged = { texto ->
-                        viewModel.onOtrosTextChanged(actividadId, texto)
-                    }
+                    checklistType = checklistType, // Pasamos el tipo al Composable hijo
+                    onSiNoDecision = { decision -> viewModel.onSiNoDecision(actividadId, decision) },
+                    onSubRespuestaSelected = { subRespuesta -> viewModel.onSubRespuestaSelected(actividadId, subRespuesta) },
+                    onOtrosTextChanged = { texto -> viewModel.onOtrosTextChanged(actividadId, texto) },
+                    // --- DIAGNÓSTICO: Pasamos la nueva función de evento ---
+                    onDiagnosticoCheckedChange = { isChecked -> viewModel.onDiagnosticoCheckedChange(actividadId, isChecked) }
                 )
             }
 
@@ -128,6 +143,27 @@ fun PreventiveChecklistScreen(
                 }
             )
         }
+
+        if (uiState.mostrarDialogoValidacion) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissValidationDialog() },
+                title = { Text("Tareas Incompletas") },
+                text = {
+                    Column {
+                        Text("Por favor, complete las siguientes tareas de diagnóstico antes de guardar:")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        uiState.tareasNoCompletadas.forEach {
+                            Text("• $it")
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.dismissValidationDialog() }) {
+                        Text("Aceptar")
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -138,115 +174,173 @@ fun ChecklistItem(
     itemState: ChecklistItemState,
     isExpanded: Boolean,
     onExpand: () -> Unit,
+    checklistType: String,
     onSiNoDecision: (Boolean) -> Unit,
     onSubRespuestaSelected: (PosibleRespuesta) -> Unit,
-    onOtrosTextChanged: (String) -> Unit
+    onOtrosTextChanged: (String) -> Unit,
+    onDiagnosticoCheckedChange: (Boolean) -> Unit
 ) {
-    // --- NUEVO: Definimos los colores para reutilizarlos ---
-    val colorNaranja = Color(0xFFF57C00)
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column {
-            // Fila del Título (con el clickable corregido)
+    // Si el checklist es de tipo "diagnostico", mostramos la UI simple
+    if (checklistType == "diagnostico") {
+        // Caso especial para el item con sub-opciones (RadioButtons)
+        if (itemState.actividad.posiblesRespuestas.size > 1) {
+            Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = itemState.actividad.actividad.nombre, style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    itemState.actividad.posiblesRespuestas.forEach { respuesta ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = itemState.subRespuestaSeleccionada?.dbId == respuesta.dbId,
+                                    onClick = { onSubRespuestaSelected(respuesta) },
+                                    role = Role.RadioButton,
+                                    // --- ¡CORRECCIÓN #1 APLICADA AQUÍ! ---
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                )
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = itemState.subRespuestaSeleccionada?.dbId == respuesta.dbId,
+                                onClick = { onSubRespuestaSelected(respuesta) }
+                            )
+                            Text(text = respuesta.label, modifier = Modifier.padding(start = 8.dp))
+                        }
+                    }
+                }
+            }
+        } else {
+            // Para el resto de items de diagnóstico, un simple checkbox
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(
+                    .selectable(
+                        selected = itemState.isChecked,
+                        onClick = { onDiagnosticoCheckedChange(!itemState.isChecked) },
+                        role = Role.Checkbox,
+                        // --- ¡CORRECCIÓN #2 APLICADA AQUÍ! ---
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onExpand
+                        indication = null
                     )
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Checkbox(
+                    checked = itemState.isChecked,
+                    onCheckedChange = { onDiagnosticoCheckedChange(it) }
+                )
                 Text(
                     text = itemState.actividad.actividad.nombre,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f)
-                )
-                Icon(
-                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (isExpanded) "Cerrar" else "Expandir"
+                    modifier = Modifier.padding(start = 16.dp)
                 )
             }
+        }
+    } else {
+        // --- VISTA PARA PREVENTIVO/CORRECTIVO (Esta parte ya estaba bien) ---
+        val colorNaranja = Color(0xFFF57C00)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onExpand
+                        )
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = itemState.actividad.actividad.nombre,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (isExpanded) "Cerrar" else "Expandir"
+                    )
+                }
 
-            // Contenido expandible
-            AnimatedVisibility(visible = isExpanded) {
-                Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
-                    HorizontalDivider()
-                    Spacer(modifier = Modifier.height(16.dp))
+                AnimatedVisibility(visible = isExpanded) {
+                    Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    // --- Botones "Sí" y "No" CON COLORES ACTUALIZADOS ---
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = { onSiNoDecision(true) },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (itemState.decisionSiNo == true) colorNaranja else MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = if (itemState.decisionSiNo == true) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        ) { Text("SÍ") }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { onSiNoDecision(true) },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (itemState.decisionSiNo == true) colorNaranja else MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = if (itemState.decisionSiNo == true) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            ) { Text("SÍ") }
 
-                        Button(
-                            onClick = { onSiNoDecision(false) },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (itemState.decisionSiNo == false) colorNaranja else MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = if (itemState.decisionSiNo == false) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        ) { Text("NO") }
-                    }
+                            Button(
+                                onClick = { onSiNoDecision(false) },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (itemState.decisionSiNo == false) colorNaranja else MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = if (itemState.decisionSiNo == false) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            ) { Text("NO") }
+                        }
 
-                    // El resto del código no cambia...
-                    AnimatedVisibility(visible = itemState.decisionSiNo != null) {
-                        Column {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            HorizontalDivider()
-                            Spacer(modifier = Modifier.height(16.dp))
+                        AnimatedVisibility(visible = itemState.decisionSiNo != null) {
+                            Column {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                HorizontalDivider()
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                            val subRespuestas = itemState.actividad.posiblesRespuestas.filter {
-                                it.esParaRespuestaAfirmativa == itemState.decisionSiNo
-                            }
+                                val subRespuestas = itemState.actividad.posiblesRespuestas.filter {
+                                    it.esParaRespuestaAfirmativa == itemState.decisionSiNo
+                                }
 
-                            subRespuestas.forEach { respuesta ->
-                                Row(
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .selectable(
+                                subRespuestas.forEach { respuesta ->
+                                    Row(
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .selectable(
+                                                selected = (itemState.subRespuestaSeleccionada?.dbId == respuesta.dbId),
+                                                onClick = { onSubRespuestaSelected(respuesta) },
+                                                role = Role.RadioButton,
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = null
+                                            )
+                                            .padding(vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        RadioButton(
                                             selected = (itemState.subRespuestaSeleccionada?.dbId == respuesta.dbId),
-                                            onClick = { onSubRespuestaSelected(respuesta) },
-                                            role = Role.RadioButton,
-                                            interactionSource = remember { MutableInteractionSource() },
-                                            indication = null
+                                            onClick = { onSubRespuestaSelected(respuesta) }
                                         )
-                                        .padding(vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    RadioButton(
-                                        selected = (itemState.subRespuestaSeleccionada?.dbId == respuesta.dbId),
-                                        onClick = { onSubRespuestaSelected(respuesta) }
-                                    )
-                                    Text(text = respuesta.label, modifier = Modifier.padding(start = 8.dp))
+                                        Text(text = respuesta.label, modifier = Modifier.padding(start = 8.dp))
+                                    }
                                 }
                             }
                         }
-                    }
-                    AnimatedVisibility(visible = itemState.subRespuestaSeleccionada?.value == "otros") {
-                        OutlinedTextField(
-                            value = itemState.textoOtros,
-                            onValueChange = onOtrosTextChanged,
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                            label = { Text("Por favor, especifique...") }
-                        )
+
+                        AnimatedVisibility(visible = itemState.subRespuestaSeleccionada?.value == "otros") {
+                            OutlinedTextField(
+                                value = itemState.textoOtros,
+                                onValueChange = onOtrosTextChanged,
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                label = { Text("Por favor, especifique...") }
+                            )
+                        }
                     }
                 }
             }

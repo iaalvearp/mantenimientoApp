@@ -292,48 +292,89 @@
 
   "tareasDiagnostico": [
     { "id": 1,
-      "nombre": "Revision de estado por comandos esta sin alarmas en \\\"display alarm active | include Major\\\" (AR2504H) / \\\"display alarm active | include Major\\\"(S5720)",
-      "type": "single_choice", "posiblesRespuestas": [
-      { "id": 1, "label": "Realizado", "value": "realizado" }
-    ]},
+      "nombre": "Revision de estado por comandos esta sin alarmas en \"display alarm active | include Major\" (AR2504H) / \"display alarm active | include Major\" (S5720)",
+      "type": "single_choice",
+      "posiblesRespuestas": [
+        {
+          "answerYes": [{ "id": 1, "label": "Realizado", "value": "realizado" }],
+          "answerNo": []
+        }
+      ]
+    },
     { "id": 2,
-      "nombre": "Ejecucion de comando \\\"display health\\\" (AR2504H) / \\\"display environment\\\"ó \\\"displaytemperatureall\\\" (S5720) revisar que el campo STATUS este NORMAL ó CurrentTemperature debe estar entre los limites 0 a 60",
-      "type": "single_choice", "posiblesRespuestas": [
-      { "id": 1, "label": "Realizado", "value": "realizado" }
-    ]},
+      "nombre": "Ejecucion de comando \"display health\" (AR2504H) / \"display environment\" ó \"displaytemperatureall\" (S5720) revisar que el campo STATUS este NORMAL ó CurrentTemperature debe estar entre los limites 0 a 60",
+      "type": "single_choice",
+      "posiblesRespuestas": [
+        {
+          "answerYes": [{ "id": 1, "label": "Realizado", "value": "realizado" }],
+          "answerNo": []
+        }
+      ]
+    },
     { "id": 3,
-      "nombre": "Ejecucion de comando \\\"display health\\\" (AR2504H) / \\\"display power\\\" (S5720) revisar que el campo STATE presente informacion de las fuentes de poder instaladas en el equipo ó que presente NORMAL",
-      "type": "single_choice", "posiblesRespuestas": [
-      { "id": 1, "label": "Realizado", "value": "realizado" }
-    ]},
+      "nombre": "Ejecucion de comando \"display health\" (AR2504H) /\"display power\" (S5720) revisar que el campo STATE presente informacion de las fuentes de poder instaladas en el equipo ó que presente NORMAL",
+      "type": "single_choice",
+      "posiblesRespuestas": [
+        {
+          "answerYes": [{ "id": 1, "label": "Realizado", "value": "realizado" }],
+          "answerNo": []
+        }
+      ]
+    },
     { "id": 4,
-      "nombre": "Ejecucion de comando \\\"display health\\\" (AR2504H) / \\\"display fan verbose\\\" (S5720) revisar que el campo REGISTER presente informacion YES de los ventiladores que tengan los equipos ó que tenga status NORMA",
-      "type": "single_choice", "posiblesRespuestas": [
-      { "id": 1, "label": "Realizado", "value": "realizado" }
-    ]},
+      "nombre": "Ejecucion de comando \"display health\" (AR2504H) / \"display fan verbose\" (S5720) revisar que el campo REGISTER presente informacion YES de los ventiladores que tengan los equipos ó que tenga status NORMAL",
+      "type": "single_choice",
+      "posiblesRespuestas": [
+        {
+          "answerYes": [{ "id": 1, "label": "Realizado", "value": "realizado" }],
+          "answerNo": []
+        }
+      ]
+    },
     { "id": 5,
-      "nombre": "Ejecucion de comando \\\"display health\\\" (AR2504H) / \\\"display cpu-usage\\\" (S5720) revisar que el campo CPU USAGE presente informacion inferior a 80% en el equipo",
-      "type": "single_choice", "posiblesRespuestas": [
-      { "id": 1, "label": "Realizado", "value": "realizado" }
-    ]},
+      "nombre": "Ejecucion de comando \"display health\" (AR2504H) / \"display cpu-usage\" (S5720) revisar que el campo CPU USAGE presente informacion inferior a 80% en el equipo",
+      "type": "single_choice",
+      "posiblesRespuestas": [
+        {
+          "answerYes": [{ "id": 1, "label": "Realizado", "value": "realizado" }],
+          "answerNo": []
+        }
+      ]
+    },
     { "id": 6,
-      "nombre": "Ejecucion de comando \\\"display health\\\" (AR2504H) / \\\"display memory-usage\\\" (S5720) revisar que el campo USED PERCENTAGE de Memoria presente informacion inferior a 60% en el equipo",
-      "type": "single_choice", "posiblesRespuestas": [
-      { "id": 1, "label": "Realizado", "value": "realizado" }
-    ]},
+      "nombre": "Ejecucion de comando \"display health\" (AR2504H) / \"display memory-usage\" (S5720) revisar que el campo USED PERCENTAGE de Memoria presente informacion inferior a 60% en el equipo",
+      "type": "single_choice",
+      "posiblesRespuestas": [
+        {
+          "answerYes": [{ "id": 1, "label": "Realizado", "value": "realizado" }],
+          "answerNo": []
+        }
+      ]
+    },
     { "id": 7,
-      "nombre": "Ejecucion de comando \\\"display health\\\" (AR2504H) / \\\"dir\\\" (S5720) revisar que el campo USED PERCENTAGE de Disco presente informacion inferior a 80% en el equipo ó al final revisar que el espacio libre en KB corresponda al 80%",
-      "type": "single_choice", "posiblesRespuestas": [
-      { "id": 1, "label": "Realizado", "value": "realizado" }
-    ]},
+      "nombre": "Ejecucion de comando \"display health\" (AR2504H) / \"dir\" (S5720) revisar que el campo USED PERCENTAGE de Disco presente informacion inferior a 80% en el equipo ó al final revisar que el espacio libre en KB corresponda al 80%",
+      "type": "single_choice",
+      "posiblesRespuestas": [
+        {
+          "answerYes": [{ "id": 1, "label": "Realizado", "value": "realizado" }],
+          "answerNo": []
+        }
+      ]
+    },
     { "id": 8,
       "nombre": "Ejecucion de comando \\\"display device\\\" (AR2504H / S5720) revisar que las tarjetas esten con estados:",
       "type": "single_choice",
       "posiblesRespuestas": [
-        {"id": 1, "label": "Online es PRESENT.", "value": "online_es_present"},
-        {"id": 2, "label": "Power es POWERON.", "value": "power_es_poweron"},
-        {"id": 3, "label": "Register es REGISTERED.", "value": "register_es_registered"},
-        {"id": 4, "label": "Alarm es NORMAL.", "value": "alarm_es_normal"}
-    ]}
+        {
+          "answerYes": [
+            {"id": 1, "label": "Online es PRESENT.", "value": "online_es_present"},
+            {"id": 2, "label": "Power es POWERON.", "value": "power_es_poweron"},
+            {"id": 3, "label": "Register es REGISTERED.", "value": "register_es_registered"},
+            {"id": 4, "label": "Alarm es NORMAL.", "value": "alarm_es_normal"}
+          ],
+          "answerNo": []
+        }
+      ]
+    }
   ]
 }

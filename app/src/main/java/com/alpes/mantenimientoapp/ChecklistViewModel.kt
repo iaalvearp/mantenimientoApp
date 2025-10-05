@@ -124,14 +124,23 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
         viewModelScope.launch {
             val currentState = _uiState.value
 
+            // --- INICIO DEL NUEVO BLOQUE DE DEPURACIÓN ---
+            Log.d("DEBUG_VALIDACION", "--- INICIANDO PROCESO DE GUARDADO ---")
+            Log.d("DEBUG_VALIDACION", "Tipo de Checklist: ${currentState.tipo}")
+            currentState.items.forEachIndexed { index, item ->
+                Log.d("DEBUG_VALIDACION", "Item #${index + 1} (ID: ${item.actividad.actividad.id}): isChecked = ${item.isChecked}")
+            }
+            Log.d("DEBUG_VALIDACION", "------------------------------------")
+            // --- FIN DEL NUEVO BLOQUE DE DEPURACIÓN ---
+
+
             // --- DIAGNÓSTICO: Bloque de validación ---
             if (currentState.tipo == "diagnostico") {
                 val tareasIncompletas = currentState.items
-                    .filter { !it.isChecked && it.actividad.posiblesRespuestas.isNotEmpty() } // Ignoramos items sin opciones
+                    .filter { !it.isChecked && it.actividad.posiblesRespuestas.isNotEmpty() }
                     .map { it.actividad.actividad.nombre }
 
                 if (tareasIncompletas.isNotEmpty()) {
-                    // Si hay tareas incompletas, mostramos el diálogo de error y no guardamos
                     _uiState.update { it.copy(mostrarDialogoValidacion = true, tareasNoCompletadas = tareasIncompletas) }
                     return@launch
                 }
