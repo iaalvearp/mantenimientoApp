@@ -124,20 +124,11 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
         viewModelScope.launch {
             val currentState = _uiState.value
 
-            // --- INICIO DEL NUEVO BLOQUE DE DEPURACIÓN ---
-            Log.d("DEBUG_VALIDACION", "--- INICIANDO PROCESO DE GUARDADO ---")
-            Log.d("DEBUG_VALIDACION", "Tipo de Checklist: ${currentState.tipo}")
-            currentState.items.forEachIndexed { index, item ->
-                Log.d("DEBUG_VALIDACION", "Item #${index + 1} (ID: ${item.actividad.actividad.id}): isChecked = ${item.isChecked}")
-            }
-            Log.d("DEBUG_VALIDACION", "------------------------------------")
-            // --- FIN DEL NUEVO BLOQUE DE DEPURACIÓN ---
-
-
-            // --- DIAGNÓSTICO: Bloque de validación ---
+            // --- DIAGNÓSTICO: Bloque de validación CORREGIDO ---
             if (currentState.tipo == "diagnostico") {
                 val tareasIncompletas = currentState.items
-                    .filter { !it.isChecked && it.actividad.posiblesRespuestas.isNotEmpty() }
+                    // La condición ahora revisa ambas posibilidades de respuesta
+                    .filter { !it.isChecked && it.subRespuestaSeleccionada == null && it.actividad.posiblesRespuestas.isNotEmpty() }
                     .map { it.actividad.actividad.nombre }
 
                 if (tareasIncompletas.isNotEmpty()) {
@@ -146,16 +137,17 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                 }
             }
 
-            // Si la validación pasa (o no es diagnóstico), procedemos a guardar
+            // Si la validación pasa, procedemos a guardar
             currentState.items.forEach { itemState ->
                 if (currentState.tipo == "diagnostico") {
-                    if (itemState.isChecked) {
+                    // Ahora también guardamos la sub-respuesta del item 8
+                    if (itemState.isChecked || itemState.subRespuestaSeleccionada != null) {
                         val resultado = MantenimientoResultado(
                             equipoId = equipoId,
                             actividadId = itemState.actividad.actividad.id,
                             decisionSiNo = null,
-                            respuestaValue = "realizado", // Guardamos un valor estándar
-                            observacion = "Marcado como completado"
+                            respuestaValue = itemState.subRespuestaSeleccionada?.value ?: "realizado",
+                            observacion = itemState.subRespuestaSeleccionada?.label ?: "Marcado como completado"
                         )
                         dao.insertarResultado(resultado)
                     }
@@ -174,7 +166,7 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                 }
             }
 
-            // Lógica para guardar la observación general y firmware (sin cambios)
+            // El resto de la lógica de guardado se mantiene...
             if (currentState.observacionGeneral.isNotBlank()) {
                 val obsResultado = MantenimientoResultado(
                     equipoId = equipoId, actividadId = -1, decisionSiNo = null,
@@ -197,7 +189,6 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                 dao.insertarResultado(firmwareDespuesResultado)
             }
 
-            // Actualizamos el estado del equipo a "en progreso"
             dao.updateEquipoStatus(equipoId = equipoId, newStatusId = 2)
             _showSaveConfirmation.value = true
         }
