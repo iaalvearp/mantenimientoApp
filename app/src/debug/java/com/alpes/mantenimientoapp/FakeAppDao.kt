@@ -51,4 +51,5 @@ class FakeAppDao : AppDao {
     override suspend fun getDetailsForModel(modelo: String): EquipoDetalles? = null
     override suspend fun getUnidadesNegocioByCiudad(idDeLaCiudad: Int): List<UnidadNegocio> = emptyList()
     override suspend fun DEBUG_getAllAgencias(): List<Agencia> = emptyList()
+    override suspend fun getMinTareaId(): Int? = null
 }

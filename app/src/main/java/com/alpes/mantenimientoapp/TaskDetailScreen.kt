@@ -46,7 +46,11 @@ fun TaskDetailScreen(
         }
     ) { paddingValues ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp).verticalScroll(rememberScrollState()),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text("INFORMACIÓN GENERAL", style = MaterialTheme.typography.titleMedium)
@@ -112,7 +116,9 @@ fun TaskDetailScreen(
             Spacer(modifier = Modifier.weight(1f)) // Empuja el botón hacia abajo
 
             Button(
-                onClick = onNextClicked,
+                onClick = {
+                    viewModel.saveLocalTaskDetails { onNextClicked() }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -156,7 +162,9 @@ fun <T> SearchableDropdown(
             },
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.fillMaxWidth().menuAnchor(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
             enabled = enabled,
             readOnly = isReadOnly
         )

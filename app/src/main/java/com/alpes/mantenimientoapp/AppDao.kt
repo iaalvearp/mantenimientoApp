@@ -81,4 +81,7 @@ interface AppDao {
 
     @Query("SELECT * FROM agencias LIMIT 10")
     suspend fun DEBUG_getAllAgencias(): List<Agencia>
+
+    @Query("SELECT MIN(id) FROM tareas")
+    suspend fun getMinTareaId(): Int?
 }

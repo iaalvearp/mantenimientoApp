@@ -126,4 +126,44 @@ open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
     }
 
     fun onAgenciaSearchTextChanged(text: String) { _uiState.update { it.copy(agenciaSearchText = text) } }
+
+    // Se llamará antes de navegar a la siguiente pantalla
+    fun saveLocalTaskDetails(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            val currentState = _uiState.value
+            val equipo = currentState.equipo
+
+            // Solo actuamos si es un equipo local (tareaId < 0) y si todos los campos han sido seleccionados
+            if (equipo != null && equipo.tareaId < 0 &&
+                currentState.clienteSeleccionado != null &&
+                currentState.proyectoSeleccionado != null &&
+                currentState.provinciaSeleccionada != null &&
+                currentState.ciudadSeleccionada != null &&
+                currentState.unidadNegocioSeleccionada != null &&
+                currentState.agenciaSeleccionada != null &&
+                equipo.creadoPorUsuarioId != null
+            ) {
+                // Generamos un nuevo ID negativo para la tarea
+                val minId = dao.getMinTareaId() ?: 0
+                val nuevaTareaId = if (minId < 0) minId - 1 else -1
+
+                val nuevaTarea = Tarea(
+                    id = nuevaTareaId,
+                    usuarioId = equipo.creadoPorUsuarioId, // Usamos el ID del usuario que creó el equipo
+                    clienteId = currentState.clienteSeleccionado.id,
+                    proyectoId = currentState.proyectoSeleccionado.id,
+                    provinciaId = currentState.provinciaSeleccionada.id,
+                    ciudadId = currentState.ciudadSeleccionada.id,
+                    unidadNegocioId = currentState.unidadNegocioSeleccionada.id,
+                    agenciaId = currentState.agenciaSeleccionada.id
+                )
+
+                // Guardamos la nueva tarea y la vinculamos al equipo
+                dao.insertarTarea(nuevaTarea)
+                dao.vincularEquipoConTarea(equipo.id, nuevaTareaId)
+            }
+            // Una vez terminado (o si no era necesario), ejecutamos la navegación
+            onComplete()
+        }
+    }
 }
