@@ -36,6 +36,16 @@ fun PreventiveChecklistScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val showDialog by viewModel.showSaveConfirmation.collectAsStateWithLifecycle()
 
+    val onNavigateToDiagnostic: (String) -> Unit // <-- Debes reemplazar esto con tu llamada de navegación real
+
+    LaunchedEffect(key1 = Unit) {
+        viewModel.navigateToDiagnostic.collect { equipoId ->
+            // Aquí llamas a tu función de navegación real, pasando el equipoId
+            // Por ejemplo: navController.navigate("diagnostico/$equipoId")
+            onNavigateToDiagnostic(equipoId)
+        }
+    }
+
     var expandedItemId by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(key1 = checklistType) {

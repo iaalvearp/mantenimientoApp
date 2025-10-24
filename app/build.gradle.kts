@@ -22,10 +22,23 @@ android {
         }
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        getByName("debug") {
+            // Esto crea la variable BASE_URL para tus pruebas
+            buildConfigField("String", "BASE_URL", "\"https://api-mock.iaalvearp.workers.dev\"")
+        }
+        getByName("release") {
+            // Esto crea la misma variable BASE_URL para la versión de producción
+            buildConfigField("String", "BASE_URL", "\"http://184.174.39.191:8000\"")
+            isMinifyEnabled = false // Asegúrate de tener esto o tu configuración de ProGuard
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     compileOptions {

@@ -52,4 +52,8 @@ class FakeAppDao : AppDao {
     override suspend fun getUnidadesNegocioByCiudad(idDeLaCiudad: Int): List<UnidadNegocio> = emptyList()
     override suspend fun DEBUG_getAllAgencias(): List<Agencia> = emptyList()
     override suspend fun getMinTareaId(): Int? = null
+    // --- NUEVA FUNCIÓN (FAKE) ---
+    override suspend fun contarResultadosPorTipo(equipoId: String, tipoMantenimiento: String): Int = 0
+    // --- NUEVA FUNCIÓN (FAKE) ---
+    override suspend fun contarResultadosDiagnostico(equipoId: String): Int = 0
 }

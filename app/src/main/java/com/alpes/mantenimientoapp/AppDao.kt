@@ -84,4 +84,12 @@ interface AppDao {
 
     @Query("SELECT MIN(id) FROM tareas")
     suspend fun getMinTareaId(): Int?
+
+    // --- NUEVA FUNCIÓN: Cuenta resultados de un tipo específico (excluyendo diagnóstico) ---
+    @Query("SELECT COUNT(*) FROM mantenimiento_resultados WHERE equipoId = :equipoId AND respuestaValue = :tipoMantenimiento")
+    suspend fun contarResultadosPorTipo(equipoId: String, tipoMantenimiento: String): Int
+
+    // --- NUEVA FUNCIÓN: Cuenta resultados de diagnóstico ---
+    @Query("SELECT COUNT(*) FROM mantenimiento_resultados WHERE equipoId = :equipoId AND (respuestaValue = 'diagnostico' OR respuestaValue = 'realizado')")
+    suspend fun contarResultadosDiagnostico(equipoId: String): Int
 }

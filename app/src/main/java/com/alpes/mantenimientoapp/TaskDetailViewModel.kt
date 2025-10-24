@@ -1,4 +1,4 @@
-// Archivo: TaskDetailViewModel.kt
+// Archivo: TaskDetailViewModel.kt (REEMPLAZAR COMPLETO)
 package com.alpes.mantenimientoapp
 
 import android.util.Log
@@ -23,7 +23,12 @@ data class TaskDetailUiState(
     val ciudadesFiltradas: List<Ciudad> = emptyList(),
     val unidadesNegocioFiltradas: List<UnidadNegocio> = emptyList(),
     val agenciasFiltradas: List<Agencia> = emptyList(),
-    val agenciaSearchText: String = ""
+    val agenciaSearchText: String = "",
+
+    // --- CAMBIOS PARA REQUISITO #6 ---
+    val isPreventiveCompleted: Boolean = false,
+    val isCorrectiveCompleted: Boolean = false,
+    val isDiagnosticCompleted: Boolean = false
 )
 
 open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
@@ -39,7 +44,22 @@ open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
     open fun loadDataForEquipo(equipoId: String) {
         viewModelScope.launch {
             val equipo = dao.obtenerEquipoPorId(equipoId)
-            _uiState.update { it.copy(equipo = equipo) }
+
+            // --- LÓGICA DE REQUISITO #6: Verificar mantenimientos completados ---
+            val preventiveCount = dao.contarResultadosPorTipo(equipoId, "preventivo")
+            val correctiveCount = dao.contarResultadosPorTipo(equipoId, "correctivo")
+            val diagnosticCount = dao.contarResultadosDiagnostico(equipoId)
+            // --- FIN LÓGICA REQUISITO #6 ---
+
+            _uiState.update {
+                it.copy(
+                    equipo = equipo,
+                    // Actualizamos el estado basado en si se encontraron resultados
+                    isPreventiveCompleted = preventiveCount > 0,
+                    isCorrectiveCompleted = correctiveCount > 0,
+                    isDiagnosticCompleted = diagnosticCount > 0
+                )
+            }
 
             if (equipo != null && equipo.tareaId > 0) {
                 val tarea = dao.obtenerTareaPorId(equipo.tareaId)
@@ -56,6 +76,9 @@ open class TaskDetailViewModel(private val dao: AppDao) : ViewModel() {
             }
         }
     }
+
+    // --- EL RESTO DEL ARCHIVO NO CAMBIA ---
+    // (Todas las funciones 'onClienteSelected', 'onProyectoSelected', 'saveLocalTaskDetails', etc. se quedan igual)
 
     fun onClienteSelected(cliente: Cliente?, autoSelectProject: Proyecto? = null) {
         _uiState.update { it.copy(clienteSeleccionado = cliente, proyectoSeleccionado = autoSelectProject, proyectosFiltrados = emptyList()) }

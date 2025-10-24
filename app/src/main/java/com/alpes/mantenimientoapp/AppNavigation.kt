@@ -1,9 +1,12 @@
-// Archivo: AppNavigation.kt
+// Archivo: AppNavigation.kt (REEMPLAZAR COMPLETO)
 package com.alpes.mantenimientoapp
 
 import android.app.Application
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -98,17 +101,36 @@ fun AppNavigation() {
             val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
             val numeroSerie = backStackEntry.arguments?.getString("numeroSerie") ?: "" // <-- OBTENEMOS EL VALOR
 
+            // --- INICIO DE CAMBIOS (Req #6) ---
+            // 1. Obtenemos el ViewModel que sabe el estado del equipo
+            val taskDetailViewModel: TaskDetailViewModel = viewModel(factory = viewModelFactory)
+
+            // 2. Cargamos los datos de este equipo (esto llenará el estado de completado)
+            LaunchedEffect(key1 = equipoId) {
+                taskDetailViewModel.loadDataForEquipo(equipoId)
+            }
+            // 3. Recogemos el estado (UiState)
+            val uiState by taskDetailViewModel.uiState.collectAsStateWithLifecycle()
+            // --- FIN DE CAMBIOS (Req #6) ---
+
+
             MaintenanceActivitiesScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onPreventiveClicked = { navController.navigate("preventiveChecklist/$equipoId") },
                 onCorrectiveClicked = { navController.navigate("correctiveChecklist/$equipoId") },
-                onDiagnosticoClicked = { navController.navigate("diagnosticoChecklist/$equipoId") },
+                // onDiagnosticoClicked se elimina, ya que el composable no lo tiene (Req #8)
                 onNextClicked = { eqId, numSerie ->
                     // Navegamos a la pantalla de finalización pasando los datos
                     navController.navigate("finalizacion/$eqId/$numSerie")
                 },
                 equipoId = equipoId, // <-- PASAMOS EL VALOR
-                numeroSerie = numeroSerie // <-- PASAMOS EL VALOR
+                numeroSerie = numeroSerie, // <-- PASAMOS EL VALOR
+
+                // --- CONEXIÓN FINAL (Req #6) ---
+                // El botón Preventivo se activa si el Correctivo NO está completo
+                isPreventiveEnabled = !uiState.isCorrectiveCompleted,
+                // El botón Correctivo se activa si el Preventivo NO está completo
+                isCorrectiveEnabled = !uiState.isPreventiveCompleted
             )
         }
 
@@ -134,6 +156,19 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
             val checklistViewModel: ChecklistViewModel = viewModel(factory = viewModelFactory)
+
+            // --- INICIO DE CAMBIOS (Req #8) ---
+            // Escuchamos la señal de navegación del ViewModel
+            LaunchedEffect(key1 = Unit) {
+                checklistViewModel.navigateToDiagnostic.collect { idEquipoGuardado ->
+                    // Navegamos al diagnóstico y limpiamos la pila para no volver aquí
+                    navController.navigate("diagnosticoChecklist/$idEquipoGuardado") {
+                        popUpTo(backStackEntry.destination.id) { inclusive = true }
+                    }
+                }
+            }
+            // --- FIN DE CAMBIOS (Req #8) ---
+
             PreventiveChecklistScreen(
                 equipoId = equipoId,
                 viewModel = checklistViewModel,
@@ -150,6 +185,18 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
             val checklistViewModel: ChecklistViewModel = viewModel(factory = viewModelFactory)
+
+            // --- INICIO DE CAMBIOS (Req #8) ---
+            // Escuchamos la señal de navegación del ViewModel
+            LaunchedEffect(key1 = Unit) {
+                checklistViewModel.navigateToDiagnostic.collect { idEquipoGuardado ->
+                    // Navegamos al diagnóstico y limpiamos la pila para no volver aquí
+                    navController.navigate("diagnosticoChecklist/$idEquipoGuardado") {
+                        popUpTo(backStackEntry.destination.id) { inclusive = true }
+                    }
+                }
+            }
+            // --- FIN DE CAMBIOS (Req #8) ---
 
             // ¡Reutilizamos la misma pantalla!
             PreventiveChecklistScreen(

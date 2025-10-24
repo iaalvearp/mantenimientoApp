@@ -1,4 +1,4 @@
-// Archivo: MaintenanceActivitiesScreen.kt
+// Archivo: MaintenanceActivitiesScreen.kt (REEMPLAZAR COMPLETO)
 package com.alpes.mantenimientoapp
 
 import androidx.compose.foundation.background
@@ -21,15 +21,18 @@ fun MaintenanceActivitiesScreen(
     onNavigateBack: () -> Unit,
     onPreventiveClicked: () -> Unit,
     onCorrectiveClicked: () -> Unit,
-    onDiagnosticoClicked: () -> Unit,
-    onNextClicked: (String, String) -> Unit, // <-- AHORA ESPERA EL EQUIPOID Y EL NUMEROSERIE
-    equipoId: String, // <-- PARÁMETRO AÑADIDO
-    numeroSerie: String // <-- PARÁMETRO AÑADIDO
+    // El onDiagnosticoClicked se elimina
+    onNextClicked: (String, String) -> Unit,
+    equipoId: String,
+    numeroSerie: String,
+    // --- NUEVOS PARÁMETROS PARA DESACTIVAR BOTONES ---
+    isPreventiveEnabled: Boolean = true,
+    isCorrectiveEnabled: Boolean = true
 ) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF33A8FF)), // Fondo azul
+            .background(Color(0xFF33A8FF)),
         contentAlignment = Alignment.Center
     ) {
         Card(
@@ -54,14 +57,12 @@ fun MaintenanceActivitiesScreen(
                 }
             ) { paddingValues ->
                 Column(
-                    // --- AJUSTE 1: Aplicamos el padding aquí ---
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Este contenedor ocupa todo el espacio central
                     Column(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.Center,
@@ -69,6 +70,8 @@ fun MaintenanceActivitiesScreen(
                     ) {
                         Button(
                             onClick = onPreventiveClicked,
+                            // --- LÓGICA PARA DESACTIVAR EL BOTÓN ---
+                            enabled = isPreventiveEnabled,
                             modifier = Modifier.fillMaxWidth().height(50.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33A8FF))
@@ -79,6 +82,8 @@ fun MaintenanceActivitiesScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(
                             onClick = onCorrectiveClicked,
+                            // --- LÓGICA PARA DESACTIVAR EL BOTÓN ---
+                            enabled = isCorrectiveEnabled,
                             modifier = Modifier.fillMaxWidth().height(50.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33A8FF))
@@ -86,15 +91,7 @@ fun MaintenanceActivitiesScreen(
                         {
                             Text("CORRECTIVO")
                         }
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Button(
-                            onClick = onDiagnosticoClicked,
-                            modifier = Modifier.fillMaxWidth().height(50.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33A8FF))
-                        ) {
-                            Text("DIAGNÓSTICO")
-                        }
+                        // --- BOTÓN DE DIAGNÓSTICO ELIMINADO ---
                     }
 
                     // Botón "Siguiente" en la parte inferior
@@ -112,7 +109,6 @@ fun MaintenanceActivitiesScreen(
     }
 }
 
-// DENTRO DE MaintenanceActivitiesScreen.kt
 
 @Preview(showBackground = true)
 @Composable
@@ -122,13 +118,12 @@ fun MaintenanceActivitiesScreenPreview() {
             onNavigateBack = {},
             onPreventiveClicked = {},
             onCorrectiveClicked = {},
-            onDiagnosticoClicked = {},
-            // AJUSTE 1: La función ahora espera dos argumentos, se los damos pero no los usamos.
             onNextClicked = { _, _ -> },
-            // AJUSTE 2: Pasamos un ID de equipo ficticio.
             equipoId = "EQUIPO_PRUEBA_ID",
-            // AJUSTE 3: Pasamos un número de serie ficticio.
-            numeroSerie = "SN_PRUEBA_123"
+            numeroSerie = "SN_PRUEBA_123",
+            // Valores de ejemplo para la preview
+            isPreventiveEnabled = true,
+            isCorrectiveEnabled = false // Ejemplo de un botón desactivado
         )
     }
 }

@@ -1,32 +1,29 @@
+// Archivo: ChecklistViewModel.kt (REEMPLAZAR COMPLETO)
 package com.alpes.mantenimientoapp
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// --- CAMBIO: La nueva estructura para el estado de CADA item del checklist ---
 data class ChecklistItemState(
     val actividad: ActividadConRespuestas,
-    // Para Preventivo/Correctivo
     val decisionSiNo: Boolean? = null,
     val subRespuestaSeleccionada: PosibleRespuesta? = null,
     val textoOtros: String = "",
-    // --- DIAGNÓSTICO: Nuevo campo para el checkbox ---
     var isChecked: Boolean = false
 )
 
-// --- CAMBIO: El estado general de la UI ahora usa la nueva estructura de items ---
 data class ChecklistUiState(
     val items: List<ChecklistItemState> = emptyList(),
     val tipo: String = "",
     val observacionGeneral: String = "",
     val versionFirmwareActual: String = "",
     val versionFirmwareDespues: String = "",
-    // --- DIAGNÓSTICO: Nuevos estados para el diálogo de validación ---
     val mostrarDialogoValidacion: Boolean = false,
     val tareasNoCompletadas: List<String> = emptyList()
 )
@@ -39,12 +36,41 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
     private val _showSaveConfirmation = MutableStateFlow(false)
     val showSaveConfirmation = _showSaveConfirmation.asStateFlow()
 
+    // --- CAMBIO #1: Creamos una "señal" para la navegación ---
+    // Usamos SharedFlow porque es para eventos de una sola vez (como navegar).
+    private val _navigateToDiagnostic = MutableSharedFlow<String>()
+    val navigateToDiagnostic = _navigateToDiagnostic.asSharedFlow()
+
+
     fun loadChecklistData(tipo: String) {
         viewModelScope.launch {
             val actividades = dao.obtenerActividadesConRespuestas(tipo)
+
+            // --- CAMBIO #2: Lógica para simplificar el Mantenimiento Correctivo ---
+            val itemsProcesados = if (tipo == "correctivo") {
+                actividades.map { actividadConRespuestas ->
+                    // Creamos una única respuesta posible para "Ingresar causa..."
+                    val respuestaUnica = PosibleRespuesta(
+                        dbId = -1, // ID temporal, no se guarda
+                        id = -1,
+                        label = "Ingresar causa...", // El nuevo texto
+                        value = "otros", // El valor que activa el campo de texto
+                        actividadId = actividadConRespuestas.actividad.dbId,
+                        esParaRespuestaAfirmativa = false // O true, según tu lógica de negocio
+                    )
+                    // Reemplazamos las posibles respuestas originales por nuestra lista con un solo item
+                    val actividadModificada = actividadConRespuestas.copy(
+                        posiblesRespuestas = listOf(respuestaUnica)
+                    )
+                    ChecklistItemState(actividad = actividadModificada)
+                }
+            } else {
+                actividades.map { actividad -> ChecklistItemState(actividad = actividad) }
+            }
+
             _uiState.update {
                 it.copy(
-                    items = actividades.map { actividad -> ChecklistItemState(actividad = actividad) },
+                    items = itemsProcesados, // Usamos los items ya procesados
                     tipo = tipo,
                     observacionGeneral = "",
                     versionFirmwareActual = "",
@@ -54,80 +80,12 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
         }
     }
 
-    // --- NUEVA FUNCIÓN: Se activa cuando el usuario presiona "Sí" o "No" ---
-    fun onSiNoDecision(actividadId: Int, decision: Boolean) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                items = currentState.items.map { item ->
-                    if (item.actividad.actividad.id == actividadId) {
-                        // Actualizamos la decisión y reseteamos cualquier sub-respuesta anterior
-                        item.copy(decisionSiNo = decision, subRespuestaSeleccionada = null, textoOtros = "")
-                    } else {
-                        item
-                    }
-                }
-            )
-        }
-    }
-
-    // --- NUEVA FUNCIÓN: Se activa cuando el usuario elige una sub-respuesta de la lista ---
-    fun onSubRespuestaSelected(actividadId: Int, subRespuesta: PosibleRespuesta) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                items = currentState.items.map { item ->
-                    if (item.actividad.actividad.id == actividadId) {
-                        item.copy(subRespuestaSeleccionada = subRespuesta)
-                    } else {
-                        item
-                    }
-                }
-            )
-        }
-    }
-
-    // --- NUEVA FUNCIÓN: Se activa cuando el usuario escribe en el campo "Otros" ---
-    fun onOtrosTextChanged(actividadId: Int, texto: String) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                items = currentState.items.map { item ->
-                    if (item.actividad.actividad.id == actividadId) {
-                        item.copy(textoOtros = texto)
-                    } else {
-                        item
-                    }
-                }
-            )
-        }
-    }
-
-    // --- DIAGNÓSTICO: Nueva función para manejar el cambio del Checkbox ---
-    fun onDiagnosticoCheckedChange(actividadId: Int, isChecked: Boolean) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                items = currentState.items.map { item ->
-                    if (item.actividad.actividad.id == actividadId && item.actividad.actividad.tipo == "diagnostico") {
-                        item.copy(isChecked = isChecked)
-                    } else {
-                        item
-                    }
-                }
-            )
-        }
-    }
-
-    fun onGeneralObservationChanged(texto: String) {
-        _uiState.update { it.copy(observacionGeneral = texto) }
-    }
-
-    // --- LÓGICA DE GUARDADO ACTUALIZADA CON VALIDACIÓN ---
     fun saveChecklist(equipoId: String) {
         viewModelScope.launch {
             val currentState = _uiState.value
 
-            // --- DIAGNÓSTICO: Bloque de validación CORREGIDO ---
             if (currentState.tipo == "diagnostico") {
                 val tareasIncompletas = currentState.items
-                    // La condición ahora revisa ambas posibilidades de respuesta
                     .filter { !it.isChecked && it.subRespuestaSeleccionada == null && it.actividad.posiblesRespuestas.isNotEmpty() }
                     .map { it.actividad.actividad.nombre }
 
@@ -137,10 +95,8 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                 }
             }
 
-            // Si la validación pasa, procedemos a guardar
             currentState.items.forEach { itemState ->
                 if (currentState.tipo == "diagnostico") {
-                    // Ahora también guardamos la sub-respuesta del item 8
                     if (itemState.isChecked || itemState.subRespuestaSeleccionada != null) {
                         val resultado = MantenimientoResultado(
                             equipoId = equipoId,
@@ -151,7 +107,7 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                         )
                         dao.insertarResultado(resultado)
                     }
-                } else { // Lógica de Preventivo/Correctivo
+                } else {
                     if (itemState.decisionSiNo != null) {
                         val esOtro = itemState.subRespuestaSeleccionada?.value == "otros"
                         val resultado = MantenimientoResultado(
@@ -166,7 +122,6 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                 }
             }
 
-            // El resto de la lógica de guardado se mantiene...
             if (currentState.observacionGeneral.isNotBlank()) {
                 val obsResultado = MantenimientoResultado(
                     equipoId = equipoId, actividadId = -1, decisionSiNo = null,
@@ -190,22 +145,88 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
             }
 
             dao.updateEquipoStatus(equipoId = equipoId, newStatusId = 2)
-            _showSaveConfirmation.value = true
+
+            // --- CAMBIO #3: Emitir la señal de navegación si no es diagnóstico ---
+            if (currentState.tipo == "preventivo" || currentState.tipo == "correctivo") {
+                _navigateToDiagnostic.emit(equipoId)
+            } else {
+                // Si es diagnóstico, solo mostramos el diálogo de confirmación como antes
+                _showSaveConfirmation.value = true
+            }
         }
+    }
+
+    // --- El resto del archivo no tiene cambios, lo incluyo para que sea completo ---
+
+    fun onSiNoDecision(actividadId: Int, decision: Boolean) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                items = currentState.items.map { item ->
+                    if (item.actividad.actividad.id == actividadId) {
+                        item.copy(decisionSiNo = decision, subRespuestaSeleccionada = null, textoOtros = "")
+                    } else {
+                        item
+                    }
+                }
+            )
+        }
+    }
+
+    fun onSubRespuestaSelected(actividadId: Int, subRespuesta: PosibleRespuesta) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                items = currentState.items.map { item ->
+                    if (item.actividad.actividad.id == actividadId) {
+                        item.copy(subRespuestaSeleccionada = subRespuesta)
+                    } else {
+                        item
+                    }
+                }
+            )
+        }
+    }
+
+    fun onOtrosTextChanged(actividadId: Int, texto: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                items = currentState.items.map { item ->
+                    if (item.actividad.actividad.id == actividadId) {
+                        item.copy(textoOtros = texto)
+                    } else {
+                        item
+                    }
+                }
+            )
+        }
+    }
+
+    fun onDiagnosticoCheckedChange(actividadId: Int, isChecked: Boolean) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                items = currentState.items.map { item ->
+                    if (item.actividad.actividad.id == actividadId && item.actividad.actividad.tipo == "diagnostico") {
+                        item.copy(isChecked = isChecked)
+                    } else {
+                        item
+                    }
+                }
+            )
+        }
+    }
+
+    fun onGeneralObservationChanged(texto: String) {
+        _uiState.update { it.copy(observacionGeneral = texto) }
     }
 
     fun dismissSaveConfirmation() { _showSaveConfirmation.value = false }
 
-    // --- DIAGNÓSTICO: Nueva función para cerrar el diálogo de validación ---
     fun dismissValidationDialog() {
         _uiState.update { it.copy(mostrarDialogoValidacion = false, tareasNoCompletadas = emptyList()) }
     }
 
-    // Funciones de versión de firmware (sin cambios)
     fun onVersionActualChanged(version: String) { _uiState.update { it.copy(versionFirmwareActual = version) } }
     fun onVersionDespuesChanged(version: String) { _uiState.update { it.copy(versionFirmwareDespues = version) } }
 
-    // Estas funciones ya no se usan para el nuevo flujo, pero las mantenemos por si Diagnóstico las necesita
     fun onResponseSelected(actividadId: Int, respuesta: PosibleRespuesta) {
         _uiState.update { currentState ->
             currentState.copy(
@@ -217,6 +238,7 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
             )
         }
     }
+
     fun onObservationChanged(actividadId: Int, texto: String) {
         _uiState.update { currentState ->
             currentState.copy(
