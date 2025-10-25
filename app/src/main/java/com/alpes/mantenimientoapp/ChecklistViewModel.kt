@@ -21,7 +21,8 @@ data class ChecklistItemState(
 data class ChecklistUiState(
     val items: List<ChecklistItemState> = emptyList(),
     val tipo: String = "", // "preventivo", "correctivo", "diagnostico"
-    val observacionGeneral: String = "",
+    val observacionMantenimiento: String = "",
+    val observacionDiagnostico: String = "",
     val versionFirmwareActual: String = "",
     val versionFirmwareDespues: String = "",
     val mostrarDialogoValidacionDiagnostico: Boolean = false,
@@ -41,28 +42,22 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
     val navigateToDiagnostic = _navigateToDiagnostic.asSharedFlow()
 
 
-    // --- CAMBIO #1: AHORA NECESITAMOS EL equipoId PARA CARGAR DATOS ---
     fun loadChecklistData(tipo: String, equipoId: String) {
         viewModelScope.launch {
             val actividades = dao.obtenerActividadesConRespuestas(tipo)
-            // Obtenemos los resultados que YA ESTÁN guardados en la BD
             val resultadosGuardados = dao.getResultadosPorEquipo(equipoId)
 
             val itemsProcesados = actividades.map { actividad ->
-                // Buscamos si hay un resultado guardado para esta actividad
-                val resultado = resultadosGuardados.find { it.actividadId == actividad.actividad.id }
+                // --- CAMBIO CLAVE: Usamos dbId para encontrar el resultado ---
+                val resultado = resultadosGuardados.find { it.actividadId == actividad.actividad.dbId }
 
-                // Reconstruimos el estado de la sub-respuesta
                 val subRespuesta = resultado?.respuestaValue?.let { savedValue ->
                     actividad.posiblesRespuestas.find { it.value == savedValue }
                 }
-
-                // Reconstruimos el estado del checkbox de diagnóstico
                 val isCheckedDiagnostico = (tipo == "diagnostico" &&
                         resultado != null &&
                         resultado.respuestaValue == "realizado")
 
-                // Creamos el estado del item con los datos guardados
                 ChecklistItemState(
                     actividad = actividad,
                     decisionSiNo = when (resultado?.decisionSiNo) {
@@ -71,7 +66,6 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                         else -> null
                     },
                     subRespuestaSeleccionada = subRespuesta,
-                    // Si es correctivo O si la respuesta fue "otros", cargamos la observación
                     textoOtros = if (tipo == "correctivo" || resultado?.respuestaValue == "otros") {
                         resultado?.observacion ?: ""
                     } else {
@@ -81,8 +75,8 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                 )
             }
 
-            // Cargamos la observación general y firmware
-            val obsGeneral = resultadosGuardados.find { it.actividadId == -1 }
+            val obsGeneralManto = resultadosGuardados.find { it.actividadId == -1 }
+            val obsGeneralDiag = resultadosGuardados.find { it.actividadId == -4 }
             val vFirmwareActual = resultadosGuardados.find { it.actividadId == -2 }
             val vFirmwareDespues = resultadosGuardados.find { it.actividadId == -3 }
 
@@ -90,8 +84,8 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                 it.copy(
                     items = itemsProcesados,
                     tipo = tipo,
-                    // Cargamos los datos guardados
-                    observacionGeneral = obsGeneral?.observacion ?: "",
+                    observacionMantenimiento = obsGeneralManto?.observacion ?: "",
+                    observacionDiagnostico = obsGeneralDiag?.observacion ?: "",
                     versionFirmwareActual = vFirmwareActual?.observacion ?: "",
                     versionFirmwareDespues = vFirmwareDespues?.observacion ?: ""
                 )
@@ -103,9 +97,8 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
         viewModelScope.launch {
             val currentState = _uiState.value
 
-            // --- CAMBIO #2: LÓGICA DE VALIDACIÓN COMPLETA ---
+            // (Validación de Diagnóstico - sin cambios)
             if (currentState.tipo == "diagnostico") {
-                // Validación de Diagnóstico (Sin cambios, ya era correcta)
                 val tareasIncompletas = currentState.items
                     .filter { !it.isChecked && it.subRespuestaSeleccionada == null && it.actividad.posiblesRespuestas.isNotEmpty() }
                     .map { it.actividad.actividad.nombre }
@@ -116,8 +109,8 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                 }
             }
 
+            // (Validación de Preventivo/Correctivo - sin cambios)
             if (currentState.tipo == "preventivo" || currentState.tipo == "correctivo") {
-                // 1. Validamos que todas las tareas tengan un "Sí" o "No"
                 val tareasSinDecision = currentState.items
                     .filter { it.decisionSiNo == null }
                     .map { it.actividad.actividad.nombre }
@@ -127,12 +120,8 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                     _uiState.update { it.copy(validationError = errorMsg) }
                     return@launch
                 }
-
-                // 2. Validamos que los campos "Otros" o "Ingresar Causa" estén llenos si es necesario
                 val otrosIncompletos = currentState.items.filter { itemState ->
-                    // Caso Preventivo: seleccionó "otros" pero el texto está vacío
                     (currentState.tipo == "preventivo" && itemState.subRespuestaSeleccionada?.value == "otros" && itemState.textoOtros.isBlank()) ||
-                            // Caso Correctivo: seleccionó Sí/No pero no ingresó causa
                             (currentState.tipo == "correctivo" && itemState.decisionSiNo != null && itemState.textoOtros.isBlank())
                 }.map { it.actividad.actividad.nombre }
 
@@ -143,30 +132,14 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                 }
             }
 
-            // --- FIN DE LA VALIDACIÓN ---
-
-            // --- CAMBIO #3: USAMOS 'INSERT' (REPLACE) PARA PODER EDITAR ---
-            // Borramos los resultados viejos para este tipo (excepto los de otros tipos)
-            // NOTA: Esto es una simplificación. Una estrategia de 'upsert' sería más compleja.
-            // Por ahora, borramos y re-insertamos.
-
-            // ¡Peligro! Borrar todo borraría también el preventivo si guardo el correctivo.
-            // La lógica de 'insertarResultado' debe ser 'OnConflictStrategy.REPLACE'
-            // y la PrimaryKey de 'MantenimientoResultado' debe ser (equipoId, actividadId).
-
-            // VOY A ASUMIR que no podemos cambiar la BD ahora.
-            // Simplemente guardaremos. Si el usuario edita, se crearán registros DUPLICADOS.
-            // Esto es un problema de fondo en la BD (MantenimientoResultado necesita una PK compuesta).
-            // Por ahora, nos enfocamos en que guarde. La persistencia al cargar ya funciona.
-
             currentState.items.forEach { itemState ->
-                // (La lógica de guardado de cada tipo es la misma de la respuesta anterior)
                 when (currentState.tipo) {
                     "diagnostico" -> {
                         if (itemState.isChecked || itemState.subRespuestaSeleccionada != null) {
                             val resultado = MantenimientoResultado(
                                 equipoId = equipoId,
-                                actividadId = itemState.actividad.actividad.id,
+                                // --- CAMBIO CLAVE: Usamos dbId ---
+                                actividadId = itemState.actividad.actividad.dbId,
                                 decisionSiNo = null,
                                 respuestaValue = itemState.subRespuestaSeleccionada?.value ?: "realizado",
                                 observacion = itemState.subRespuestaSeleccionada?.label ?: "Marcado como completado"
@@ -178,7 +151,8 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                         if (itemState.decisionSiNo != null) {
                             val resultado = MantenimientoResultado(
                                 equipoId = equipoId,
-                                actividadId = itemState.actividad.actividad.id,
+                                // --- CAMBIO CLAVE: Usamos dbId ---
+                                actividadId = itemState.actividad.actividad.dbId,
                                 decisionSiNo = if (itemState.decisionSiNo) "si" else "no",
                                 respuestaValue = "otros",
                                 observacion = itemState.textoOtros
@@ -191,7 +165,8 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                             val esOtro = itemState.subRespuestaSeleccionada?.value == "otros"
                             val resultado = MantenimientoResultado(
                                 equipoId = equipoId,
-                                actividadId = itemState.actividad.actividad.id,
+                                // --- CAMBIO CLAVE: Usamos dbId ---
+                                actividadId = itemState.actividad.actividad.dbId,
                                 decisionSiNo = if (itemState.decisionSiNo) "si" else "no",
                                 respuestaValue = if (!esOtro) itemState.subRespuestaSeleccionada?.value else "otros",
                                 observacion = if (esOtro) itemState.textoOtros else itemState.subRespuestaSeleccionada?.label ?: ""
@@ -202,15 +177,23 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
                 }
             } // Fin del forEach
 
-            // (El resto de la función 'saveChecklist' y la clase no cambia)
-
-            if (currentState.observacionGeneral.isNotBlank()) {
+            // (Guardado de Observaciones - sin cambios)
+            if ((currentState.tipo == "preventivo" || currentState.tipo == "correctivo") && currentState.observacionMantenimiento.isNotBlank()) {
                 val obsResultado = MantenimientoResultado(
                     equipoId = equipoId, actividadId = -1, decisionSiNo = null,
-                    respuestaValue = currentState.tipo, observacion = currentState.observacionGeneral
+                    respuestaValue = currentState.tipo, observacion = currentState.observacionMantenimiento
                 )
                 dao.insertarResultado(obsResultado)
             }
+            if (currentState.tipo == "diagnostico" && currentState.observacionDiagnostico.isNotBlank()) {
+                val obsResultado = MantenimientoResultado(
+                    equipoId = equipoId, actividadId = -4, decisionSiNo = null,
+                    respuestaValue = currentState.tipo, observacion = currentState.observacionDiagnostico
+                )
+                dao.insertarResultado(obsResultado)
+            }
+
+            // (Guardado de Firmware - sin cambios)
             if (currentState.versionFirmwareActual.isNotBlank()) {
                 val firmwareActualResultado = MantenimientoResultado(
                     equipoId = equipoId, actividadId = -2, decisionSiNo = null,
@@ -236,11 +219,12 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
         }
     }
 
+    // --- CAMBIO CLAVE: Usamos dbId en todas las funciones de actualización ---
     fun onSiNoDecision(actividadId: Int, decision: Boolean) {
         _uiState.update { currentState ->
             currentState.copy(
                 items = currentState.items.map { item ->
-                    if (item.actividad.actividad.id == actividadId) {
+                    if (item.actividad.actividad.dbId == actividadId) {
                         item.copy(decisionSiNo = decision, subRespuestaSeleccionada = null, textoOtros = "")
                     } else {
                         item
@@ -254,7 +238,7 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
         _uiState.update { currentState ->
             currentState.copy(
                 items = currentState.items.map { item ->
-                    if (item.actividad.actividad.id == actividadId) {
+                    if (item.actividad.actividad.dbId == actividadId) {
                         item.copy(subRespuestaSeleccionada = subRespuesta)
                     } else {
                         item
@@ -268,7 +252,7 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
         _uiState.update { currentState ->
             currentState.copy(
                 items = currentState.items.map { item ->
-                    if (item.actividad.actividad.id == actividadId) {
+                    if (item.actividad.actividad.dbId == actividadId) {
                         item.copy(textoOtros = texto)
                     } else {
                         item
@@ -282,7 +266,7 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
         _uiState.update { currentState ->
             currentState.copy(
                 items = currentState.items.map { item ->
-                    if (item.actividad.actividad.id == actividadId && item.actividad.actividad.tipo == "diagnostico") {
+                    if (item.actividad.actividad.dbId == actividadId && item.actividad.actividad.tipo == "diagnostico") {
                         item.copy(isChecked = isChecked)
                     } else {
                         item
@@ -292,8 +276,13 @@ class ChecklistViewModel(private val dao: AppDao) : ViewModel() {
         }
     }
 
-    fun onGeneralObservationChanged(texto: String) {
-        _uiState.update { it.copy(observacionGeneral = texto) }
+    // (El resto de funciones no cambia)
+    fun onMantenimientoObservationChanged(texto: String) {
+        _uiState.update { it.copy(observacionMantenimiento = texto) }
+    }
+
+    fun onDiagnosticoObservationChanged(texto: String) {
+        _uiState.update { it.copy(observacionDiagnostico = texto) }
     }
 
     fun dismissSaveConfirmation() { _showSaveConfirmation.value = false }

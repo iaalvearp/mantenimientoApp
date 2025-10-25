@@ -98,7 +98,7 @@ fun PreventiveChecklistScreen(
 
             // --- LLAMADA AL NUEVO CHECKLISTITEM ---
             items(uiState.items) { itemState ->
-                val actividadId = itemState.actividad.actividad.id
+                val actividadId = itemState.actividad.actividad.dbId
                 ChecklistItem(
                     itemState = itemState,
                     isExpanded = expandedItemId == actividadId,
@@ -116,12 +116,24 @@ fun PreventiveChecklistScreen(
             // Campo de Observaciones Generales (sin cambios)
             item {
                 Spacer(modifier = Modifier.height(24.dp))
-                OutlinedTextField(
-                    value = uiState.observacionGeneral,
-                    onValueChange = { viewModel.onGeneralObservationChanged(it) },
-                    label = { Text("OBSERVACIONES / RECOMENDACIONES") },
-                    modifier = Modifier.fillMaxWidth().height(150.dp)
-                )
+                // Mostramos el campo de Mantenimiento
+                if (checklistType == "preventivo" || checklistType == "correctivo") {
+                    OutlinedTextField(
+                        value = uiState.observacionMantenimiento,
+                        onValueChange = { viewModel.onMantenimientoObservationChanged(it) },
+                        label = { Text("OBSERVACIONES / RECOMENDACIONES (Mantenimiento)") },
+                        modifier = Modifier.fillMaxWidth().height(150.dp)
+                    )
+                }
+                // Mostramos el campo de Diagnóstico
+                else if (checklistType == "diagnostico") {
+                    OutlinedTextField(
+                        value = uiState.observacionDiagnostico,
+                        onValueChange = { viewModel.onDiagnosticoObservationChanged(it) },
+                        label = { Text("OBSERVACIONES / RECOMENDACIONES (Diagnóstico)") },
+                        modifier = Modifier.fillMaxWidth().height(150.dp)
+                    )
+                }
             }
         }
 
