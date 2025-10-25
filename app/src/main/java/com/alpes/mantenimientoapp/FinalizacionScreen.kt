@@ -1,4 +1,4 @@
-// Archivo: FinalizacionScreen.kt
+// Archivo: FinalizacionScreen.kt (REEMPLAZAR COMPLETO)
 package com.alpes.mantenimientoapp
 
 import android.Manifest
@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility // <-- AÑADIR IMPORTACIÓN
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -52,7 +53,7 @@ fun FinalizacionScreen(
     var currentPhotoType by remember { mutableStateOf("") }
     var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Launcher para la CÁMARA
+    // Launchers (sin cambios)
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = { success ->
@@ -61,18 +62,14 @@ fun FinalizacionScreen(
             }
         }
     )
-
-    // Launcher para la GALERÍA
     val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetMultipleContents(), // Permite seleccionar varias fotos
+        contract = ActivityResultContracts.GetMultipleContents(),
         onResult = { uris ->
             uris.forEach { uri ->
                 viewModel.addPhotoUri(uri, currentPhotoType)
             }
         }
     )
-
-    // Launcher para PERMISOS
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
@@ -81,10 +78,10 @@ fun FinalizacionScreen(
                 tempPhotoUri = uri
                 cameraLauncher.launch(uri)
             }
-            // Aquí puedes mostrar un mensaje si el permiso es denegado
         }
     )
 
+    // LaunchedEffects (sin cambios)
     LaunchedEffect(key1 = equipoId) { viewModel.loadData(equipoId) }
     LaunchedEffect(key1 = uiState.finalizacionExitosa) {
         if (uiState.finalizacionExitosa) { onNavigateBackToHome(uiState.userId) }
@@ -109,9 +106,9 @@ fun FinalizacionScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            // Info (sin cambios)
             InfoRow(label = "Técnico Responsable:", value = uiState.tecnico?.nombre ?: "Cargando...")
             InfoRow(label = "Cliente:", value = uiState.cliente?.nombreCompleto ?: "Cargando...")
-
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text("Delegado:", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
                 OutlinedTextField(
@@ -123,85 +120,108 @@ fun FinalizacionScreen(
             }
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- SECCIÓN DE FOTOS PREVENTIVO ---
-            PhotoAttachmentSection(
-                label = "Fotos Preventivo",
-                photoUris = uiState.fotosPreventivas,
-                onAddFromCamera = {
-                    currentPhotoType = "preventivo"
-                    when (PackageManager.PERMISSION_GRANTED) {
-                        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) -> {
-                            val uri = createTempUri(context)
-                            tempPhotoUri = uri
-                            cameraLauncher.launch(uri)
+            // --- REQ #9: SECCIÓN DE FOTOS PREVENTIVO CONDICIONAL ---
+            AnimatedVisibility(visible = uiState.isPreventiveCompleted) {
+                PhotoAttachmentSection(
+                    label = "Fotos Preventivo",
+                    photoUris = uiState.fotosPreventivas,
+                    onAddFromCamera = {
+                        currentPhotoType = "preventivo"
+                        when (PackageManager.PERMISSION_GRANTED) {
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) -> {
+                                val uri = createTempUri(context)
+                                tempPhotoUri = uri
+                                cameraLauncher.launch(uri)
+                            }
+                            else -> permissionLauncher.launch(Manifest.permission.CAMERA)
                         }
-                        else -> permissionLauncher.launch(Manifest.permission.CAMERA)
-                    }
-                },
-                onAddFromGallery = {
-                    currentPhotoType = "preventivo"
-                    galleryLauncher.launch("image/*")
-                }
-            )
+                    },
+                    onAddFromGallery = {
+                        currentPhotoType = "preventivo"
+                        galleryLauncher.launch("image/*")
+                    },
+                    // --- REQ #10: Pasamos el estado de validación ---
+                    isAddEnabled = uiState.isMaxPhotoRequirementMet
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- SECCIÓN DE FOTOS CORRECTIVO ---
-            PhotoAttachmentSection(
-                label = "Fotos Correctivo",
-                photoUris = uiState.fotosCorrectivas,
-                onAddFromCamera = {
-                    currentPhotoType = "correctivo"
-                    when (PackageManager.PERMISSION_GRANTED) {
-                        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) -> {
-                            val uri = createTempUri(context)
-                            tempPhotoUri = uri
-                            cameraLauncher.launch(uri)
+            // --- REQ #9: SECCIÓN DE FOTOS CORRECTIVO CONDICIONAL ---
+            AnimatedVisibility(visible = uiState.isCorrectiveCompleted) {
+                PhotoAttachmentSection(
+                    label = "Fotos Correctivo",
+                    photoUris = uiState.fotosCorrectivas,
+                    onAddFromCamera = {
+                        currentPhotoType = "correctivo"
+                        when (PackageManager.PERMISSION_GRANTED) {
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) -> {
+                                val uri = createTempUri(context)
+                                tempPhotoUri = uri
+                                cameraLauncher.launch(uri)
+                            }
+                            else -> permissionLauncher.launch(Manifest.permission.CAMERA)
                         }
-                        else -> permissionLauncher.launch(Manifest.permission.CAMERA)
-                    }
-                },
-                onAddFromGallery = {
-                    currentPhotoType = "correctivo"
-                    galleryLauncher.launch("image/*")
-                }
-            )
+                    },
+                    onAddFromGallery = {
+                        currentPhotoType = "correctivo"
+                        galleryLauncher.launch("image/*")
+                    },
+                    // --- REQ #10: Pasamos el estado de validación ---
+                    isAddEnabled = uiState.isMaxPhotoRequirementMet
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
 
             Spacer(modifier = Modifier.weight(1f)) // Empuja el botón hacia abajo
 
+            // --- REQ #11: Lógica de 'enabled' actualizada ---
+            val isButtonEnabled = uiState.responsableCliente.isNotBlank() && uiState.isMinPhotoRequirementMet
             Button(
                 onClick = { viewModel.saveAndFinalize(equipoId, numeroSerie) },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                enabled = uiState.responsableCliente.isNotBlank(),
+                enabled = isButtonEnabled, // <-- Conectado al estado
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (uiState.responsableCliente.isNotBlank()) Color(0xFFF57C00) else MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = if (isButtonEnabled) Color(0xFFF57C00) else MaterialTheme.colorScheme.surfaceVariant
                 )
             ) { Text("FINALIZAR") }
+        }
+
+        // --- Diálogo de validación para Mín/Máx de fotos ---
+        if (uiState.validationError != null) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissValidationError() },
+                title = { Text("Error de Validación") },
+                text = { Text(uiState.validationError!!) },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.dismissValidationError() }) {
+                        Text("Aceptar")
+                    }
+                }
+            )
         }
     }
 }
 
-// --- NUEVO COMPOSABLE PARA LA SECCIÓN DE FOTOS ---
+// --- COMPOSABLE PhotoAttachmentSection MODIFICADO ---
 @Composable
 private fun PhotoAttachmentSection(
     label: String,
     photoUris: List<Uri>,
     onAddFromCamera: () -> Unit,
-    onAddFromGallery: () -> Unit
+    onAddFromGallery: () -> Unit,
+    isAddEnabled: Boolean // <-- REQ #10: Nuevo parámetro
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        // --- AJUSTE 1: Centrar el título ---
         Text(
-            text = label,
+            text = "$label (${photoUris.size})", // Mostramos el conteo
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center // <-- ¡AQUÍ ESTÁ LA MAGIA!
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Esta fila es solo para las miniaturas de las fotos y sigue siendo scrollable
         if (photoUris.isNotEmpty()) {
             Row(
                 modifier = Modifier
@@ -224,7 +244,6 @@ private fun PhotoAttachmentSection(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // --- AJUSTE 2: Botones que ocupan todo el ancho ---
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -233,7 +252,8 @@ private fun PhotoAttachmentSection(
                 onClick = onAddFromCamera,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33A8FF))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33A8FF)),
+                enabled = isAddEnabled // <-- REQ #10: Desactiva si llega a 6
             ) {
                 Icon(Icons.Filled.AddAPhoto, contentDescription = null)
                 Spacer(modifier = Modifier.width(4.dp))
@@ -243,7 +263,8 @@ private fun PhotoAttachmentSection(
                 onClick = onAddFromGallery,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33A8FF))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF33A8FF)),
+                enabled = isAddEnabled // <-- REQ #10: Desactiva si llega a 6
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.gallery),
@@ -257,6 +278,7 @@ private fun PhotoAttachmentSection(
     }
 }
 
+// (createTempUri e InfoRow se mantienen igual)
 private fun createTempUri(context: Context): Uri {
     val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
     val file = File(context.cacheDir, "JPEG_${timeStamp}_.jpg")
@@ -266,8 +288,6 @@ private fun createTempUri(context: Context): Uri {
         file
     )
 }
-
-// ... (El Composable InfoRow se mantiene igual)
 
 @Composable
 private fun InfoRow(label: String, value: String) {
