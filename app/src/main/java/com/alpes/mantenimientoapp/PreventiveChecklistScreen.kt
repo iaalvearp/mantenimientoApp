@@ -1,3 +1,4 @@
+// Archivo: PreventiveChecklistScreen.kt (REEMPLAZAR COMPLETO)
 package com.alpes.mantenimientoapp
 
 
@@ -36,20 +37,10 @@ fun PreventiveChecklistScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val showDialog by viewModel.showSaveConfirmation.collectAsStateWithLifecycle()
 
-    val onNavigateToDiagnostic: (String) -> Unit // <-- Debes reemplazar esto con tu llamada de navegación real
-
-    LaunchedEffect(key1 = Unit) {
-        viewModel.navigateToDiagnostic.collect { equipoId ->
-            // Aquí llamas a tu función de navegación real, pasando el equipoId
-            // Por ejemplo: navController.navigate("diagnostico/$equipoId")
-            onNavigateToDiagnostic(equipoId)
-        }
-    }
-
     var expandedItemId by remember { mutableStateOf<Int?>(null) }
 
-    LaunchedEffect(key1 = checklistType) {
-        viewModel.loadChecklistData(checklistType)
+    LaunchedEffect(key1 = checklistType, key2 = equipoId) {
+        viewModel.loadChecklistData(checklistType, equipoId)
     }
 
     Scaffold(
@@ -114,11 +105,10 @@ fun PreventiveChecklistScreen(
                     onExpand = {
                         expandedItemId = if (expandedItemId == actividadId) null else actividadId
                     },
-                    checklistType = checklistType, // Pasamos el tipo al Composable hijo
+                    checklistType = checklistType,
                     onSiNoDecision = { decision -> viewModel.onSiNoDecision(actividadId, decision) },
                     onSubRespuestaSelected = { subRespuesta -> viewModel.onSubRespuestaSelected(actividadId, subRespuesta) },
                     onOtrosTextChanged = { texto -> viewModel.onOtrosTextChanged(actividadId, texto) },
-                    // --- DIAGNÓSTICO: Pasamos la nueva función de evento ---
                     onDiagnosticoCheckedChange = { isChecked -> viewModel.onDiagnosticoCheckedChange(actividadId, isChecked) }
                 )
             }
@@ -154,9 +144,10 @@ fun PreventiveChecklistScreen(
             )
         }
 
-        if (uiState.mostrarDialogoValidacion) {
+        // --- CAMBIO #1: Diálogo de validación de Diagnóstico (Actualizado) ---
+        if (uiState.mostrarDialogoValidacionDiagnostico) {
             AlertDialog(
-                onDismissRequest = { viewModel.dismissValidationDialog() },
+                onDismissRequest = { viewModel.dismissDiagnosticValidationDialog() }, // <-- Función renombrada
                 title = { Text("Tareas Incompletas") },
                 text = {
                     Column {
@@ -168,7 +159,22 @@ fun PreventiveChecklistScreen(
                     }
                 },
                 confirmButton = {
-                    TextButton(onClick = { viewModel.dismissValidationDialog() }) {
+                    TextButton(onClick = { viewModel.dismissDiagnosticValidationDialog() }) { // <-- Función renombrada
+                        Text("Aceptar")
+                    }
+                }
+            )
+        }
+
+        // --- CAMBIO #2: ¡NUEVO DIÁLOGO DE VALIDACIÓN GENÉRICA! ---
+        if (uiState.validationError != null) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissGenericValidationError() },
+                title = { Text("Formulario Incompleto") },
+                // Aseguramos que el texto muestre saltos de línea
+                text = { Text(uiState.validationError!!) },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.dismissGenericValidationError() }) {
                         Text("Aceptar")
                     }
                 }
@@ -178,13 +184,14 @@ fun PreventiveChecklistScreen(
 }
 
 
-// --- INICIO DEL COMPOSABLE ChecklistItem TOTALMENTE RECONSTRUIDO ---
+// --- COMPOSABLE ChecklistItem (REEMPLAZAR COMPLETO) ---
+// (Este es el mismo código de la respuesta anterior, que corrige la lógica del correctivo)
 @Composable
 fun ChecklistItem(
     itemState: ChecklistItemState,
     isExpanded: Boolean,
     onExpand: () -> Unit,
-    checklistType: String,
+    checklistType: String, // "preventivo", "correctivo", "diagnostico"
     onSiNoDecision: (Boolean) -> Unit,
     onSubRespuestaSelected: (PosibleRespuesta) -> Unit,
     onOtrosTextChanged: (String) -> Unit,
@@ -206,7 +213,6 @@ fun ChecklistItem(
                                     selected = itemState.subRespuestaSeleccionada?.dbId == respuesta.dbId,
                                     onClick = { onSubRespuestaSelected(respuesta) },
                                     role = Role.RadioButton,
-                                    // --- ¡CORRECCIÓN #1 APLICADA AQUÍ! ---
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
                                 )
@@ -231,7 +237,6 @@ fun ChecklistItem(
                         selected = itemState.isChecked,
                         onClick = { onDiagnosticoCheckedChange(!itemState.isChecked) },
                         role = Role.Checkbox,
-                        // --- ¡CORRECCIÓN #2 APLICADA AQUÍ! ---
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     )
@@ -249,13 +254,14 @@ fun ChecklistItem(
             }
         }
     } else {
-        // --- VISTA PARA PREVENTIVO/CORRECTIVO (Esta parte ya estaba bien) ---
+        // --- VISTA PARA PREVENTIVO/CORRECTIVO ---
         val colorNaranja = Color(0xFFF57C00)
         Card(
             modifier = Modifier.fillMaxWidth(),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column {
+                // Título expandible (Sin cambios)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -279,11 +285,13 @@ fun ChecklistItem(
                     )
                 }
 
+                // Contenido expandible
                 AnimatedVisibility(visible = isExpanded) {
                     Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
                         HorizontalDivider()
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        // Botones SÍ/NO (Sin cambios)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -309,51 +317,65 @@ fun ChecklistItem(
                             ) { Text("NO") }
                         }
 
+                        // Lógica para mostrar sub-respuestas (Preventivo) o campo de texto (Correctivo)
                         AnimatedVisibility(visible = itemState.decisionSiNo != null) {
                             Column {
                                 Spacer(modifier = Modifier.height(16.dp))
                                 HorizontalDivider()
                                 Spacer(modifier = Modifier.height(16.dp))
 
-                                val subRespuestas = itemState.actividad.posiblesRespuestas.filter {
-                                    it.esParaRespuestaAfirmativa == itemState.decisionSiNo
-                                }
+                                // SI ES PREVENTIVO, mostramos las sub-respuestas (RadioButtons)
+                                if (checklistType == "preventivo") {
+                                    val subRespuestas = itemState.actividad.posiblesRespuestas.filter {
+                                        it.esParaRespuestaAfirmativa == itemState.decisionSiNo
+                                    }
 
-                                subRespuestas.forEach { respuesta ->
-                                    Row(
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .selectable(
+                                    subRespuestas.forEach { respuesta ->
+                                        Row(
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .selectable(
+                                                    selected = (itemState.subRespuestaSeleccionada?.dbId == respuesta.dbId),
+                                                    onClick = { onSubRespuestaSelected(respuesta) },
+                                                    role = Role.RadioButton,
+                                                    interactionSource = remember { MutableInteractionSource() },
+                                                    indication = null
+                                                )
+                                                .padding(vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            RadioButton(
                                                 selected = (itemState.subRespuestaSeleccionada?.dbId == respuesta.dbId),
-                                                onClick = { onSubRespuestaSelected(respuesta) },
-                                                role = Role.RadioButton,
-                                                interactionSource = remember { MutableInteractionSource() },
-                                                indication = null
+                                                onClick = { onSubRespuestaSelected(respuesta) }
                                             )
-                                            .padding(vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        RadioButton(
-                                            selected = (itemState.subRespuestaSeleccionada?.dbId == respuesta.dbId),
-                                            onClick = { onSubRespuestaSelected(respuesta) }
+                                            Text(text = respuesta.label, modifier = Modifier.padding(start = 8.dp))
+                                        }
+                                    }
+
+                                    // Campo "Otros" del PREVENTIVO (solo si se selecciona "otros")
+                                    AnimatedVisibility(visible = itemState.subRespuestaSeleccionada?.value == "otros") {
+                                        OutlinedTextField(
+                                            value = itemState.textoOtros,
+                                            onValueChange = onOtrosTextChanged,
+                                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                            label = { Text("Por favor, especifique...") }
                                         )
-                                        Text(text = respuesta.label, modifier = Modifier.padding(start = 8.dp))
                                     }
                                 }
+                                // SI ES CORRECTIVO, mostramos el campo de texto directamente
+                                else if (checklistType == "correctivo") {
+                                    OutlinedTextField(
+                                        value = itemState.textoOtros,
+                                        onValueChange = onOtrosTextChanged,
+                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                        label = { Text("Ingresar causa...") } // Requisito #7
+                                    )
+                                }
                             }
-                        }
-
-                        AnimatedVisibility(visible = itemState.subRespuestaSeleccionada?.value == "otros") {
-                            OutlinedTextField(
-                                value = itemState.textoOtros,
-                                onValueChange = onOtrosTextChanged,
-                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                                label = { Text("Por favor, especifique...") }
-                            )
-                        }
+                        } // Fin AnimatedVisibility (decisionSiNo != null)
                     }
-                }
+                } // Fin AnimatedVisibility (isExpanded)
             }
-        }
-    }
+        } // Fin Card
+    } // Fin Else
 }

@@ -13,6 +13,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @Composable
 fun AppNavigation() {
@@ -92,44 +96,47 @@ fun AppNavigation() {
         }
 
         composable(
-            route = "maintenanceActivities/{equipoId}/{numeroSerie}", // <-- RUTA ACTUALIZADA
+            route = "maintenanceActivities/{equipoId}/{numeroSerie}",
             arguments = listOf(
                 navArgument("equipoId") { type = NavType.StringType },
-                navArgument("numeroSerie") { type = NavType.StringType } // <-- ARGUMENTO AÑADIDO
+                navArgument("numeroSerie") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             val equipoId = backStackEntry.arguments?.getString("equipoId") ?: ""
-            val numeroSerie = backStackEntry.arguments?.getString("numeroSerie") ?: "" // <-- OBTENEMOS EL VALOR
+            val numeroSerie = backStackEntry.arguments?.getString("numeroSerie") ?: ""
 
-            // --- INICIO DE CAMBIOS (Req #6) ---
-            // 1. Obtenemos el ViewModel que sabe el estado del equipo
+            // 1. Obtenemos el ViewModel (sin cambios)
             val taskDetailViewModel: TaskDetailViewModel = viewModel(factory = viewModelFactory)
 
-            // 2. Cargamos los datos de este equipo (esto llenará el estado de completado)
-            LaunchedEffect(key1 = equipoId) {
-                taskDetailViewModel.loadDataForEquipo(equipoId)
-            }
-            // 3. Recogemos el estado (UiState)
-            val uiState by taskDetailViewModel.uiState.collectAsStateWithLifecycle()
-            // --- FIN DE CAMBIOS (Req #6) ---
+            // --- INICIO DE CAMBIOS (Req #6a) ---
+            // 2. Obtenemos el ciclo de vida actual
+            val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
+            // 3. Creamos un 'Efecto' que se suscribe a los eventos del ciclo de vida
+            LaunchedEffect(key1 = lifecycleOwner) {
+                lifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
+                    // 4. CADA VEZ que la pantalla vuelve a estar en 'ON_RESUME' (visible)
+                    override fun onResume(owner: LifecycleOwner) {
+                        // 5. Le decimos al ViewModel que recargue los datos de la BD
+                        taskDetailViewModel.loadDataForEquipo(equipoId)
+                    }
+                })
+            }
+            // --- FIN DE CAMBIOS (Req #6a) ---
+
+            // 3. Recogemos el estado (UiState) (sin cambios)
+            val uiState by taskDetailViewModel.uiState.collectAsStateWithLifecycle()
 
             MaintenanceActivitiesScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onPreventiveClicked = { navController.navigate("preventiveChecklist/$equipoId") },
                 onCorrectiveClicked = { navController.navigate("correctiveChecklist/$equipoId") },
-                // onDiagnosticoClicked se elimina, ya que el composable no lo tiene (Req #8)
                 onNextClicked = { eqId, numSerie ->
-                    // Navegamos a la pantalla de finalización pasando los datos
                     navController.navigate("finalizacion/$eqId/$numSerie")
                 },
-                equipoId = equipoId, // <-- PASAMOS EL VALOR
-                numeroSerie = numeroSerie, // <-- PASAMOS EL VALOR
-
-                // --- CONEXIÓN FINAL (Req #6) ---
-                // El botón Preventivo se activa si el Correctivo NO está completo
+                equipoId = equipoId,
+                numeroSerie = numeroSerie,
                 isPreventiveEnabled = !uiState.isCorrectiveCompleted,
-                // El botón Correctivo se activa si el Preventivo NO está completo
                 isCorrectiveEnabled = !uiState.isPreventiveCompleted
             )
         }

@@ -56,4 +56,5 @@ class FakeAppDao : AppDao {
     override suspend fun contarResultadosPorTipo(equipoId: String, tipoMantenimiento: String): Int = 0
     // --- NUEVA FUNCIÓN (FAKE) ---
     override suspend fun contarResultadosDiagnostico(equipoId: String): Int = 0
+    override suspend fun getResultadosPorEquipo(equipoId: String): List<MantenimientoResultado> = emptyList()
 }

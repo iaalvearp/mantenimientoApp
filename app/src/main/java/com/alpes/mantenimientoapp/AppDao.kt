@@ -92,4 +92,7 @@ interface AppDao {
     // --- NUEVA FUNCIÓN: Cuenta resultados de diagnóstico ---
     @Query("SELECT COUNT(*) FROM mantenimiento_resultados WHERE equipoId = :equipoId AND (respuestaValue = 'diagnostico' OR respuestaValue = 'realizado')")
     suspend fun contarResultadosDiagnostico(equipoId: String): Int
+
+    @Query("SELECT * FROM mantenimiento_resultados WHERE equipoId = :equipoId")
+    suspend fun getResultadosPorEquipo(equipoId: String): List<MantenimientoResultado>
 }
